@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "PowerShell(gh repo view hackathonBTK2025/trendyAI --json name,description,defaultBranchRef,url 2>&1)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm -v)",
+      "Bash(git --version)",
+      "Bash(npx --version)",
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Bash(cd \"/c/Users/VICTUS/OneDrive/Documents/Masaüstü/PROJECTS/trendyai\" && rmdir .dist && ls -la)"
+    ]
+  }
+}
