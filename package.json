@@ -3,24 +3,51 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "tsx prisma/seed.ts",
+    "products:refresh": "tsx prisma/sources/run.ts && tsx prisma/classify-products.ts",
+    "test:db:push": "dotenv -e .env.test -- prisma db push --skip-generate --accept-data-loss",
+    "test:seed": "dotenv -e .env.test -- tsx tests/setup/seed-test-db.ts",
+    "test:db": "dotenv -e .env.test -- vitest run tests/db",
+    "test:api": "dotenv -e .env.test -- vitest run tests/api",
+    "test:e2e": "dotenv -e .env.test -- playwright test",
+    "test:all": "npm run test:db:push && npm run test:seed && npm run test:db && npm run test:api && npm run test:e2e"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "framer-motion": "^12.43.0",
+    "groq-sdk": "^1.5.0",
+    "lucide-react": "^1.28.0",
     "next": "16.2.10",
+    "next-auth": "5.0.0-beta.31",
+    "prisma": "^6.19.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.1",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

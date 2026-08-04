@@ -15,7 +15,16 @@
 
 # next.js
 /.next/
+/.next-test/
 /out/
+
+# test automation
+/playwright-report/
+/test-results/
+
+# databases
+*.db
+*.db-journal
 
 # production
 /build
@@ -39,3 +48,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# user-uploaded content
+/public/uploads
+
+# large video assets (exceed GitHub's 100MB file limit)
+/public/videos
