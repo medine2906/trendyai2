@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { uniqueTestUser, signup, deleteTestUser } from "./helpers";
+import { uniqueTestUser, createTestUser, loginViaUI, deleteTestUser } from "./helpers";
 
 // GROQ_API_KEY .env.test'te bilinçli olarak boş bırakıldı, bu yüzden /api/chat
 // deterministik keyword-fallback moduna düşer (bkz. src/lib/groq.ts). Bu testler
@@ -11,7 +11,8 @@ test.describe("AI arama (chat)", () => {
 
   test.beforeEach(async ({ page }) => {
     user = uniqueTestUser("chat");
-    await signup(page, user);
+    await createTestUser(user);
+    await loginViaUI(page, user);
     await page.goto("/chat");
   });
 

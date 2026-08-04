@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TrendAI
 
-## Getting Started
+TrendAI, bir moda/e-ticaret keşif ve sosyal ağı uygulamasıdır. Önceden Firebase
+(Auth + Firestore + Genkit/Gemini) ile yapılmış bir hackathon projesinin
+Firebase'siz olarak yeniden inşa edilmiş hâlidir.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16.2.10** (App Router) — dikkat: bu proje yolu ASCII olmayan bir
+  karakter içerdiği için ("Masaüstü") Turbopack çöküyor, `npm run dev` webpack
+  ile çalışacak şekilde ayarlandı.
+- **React 19**
+- **Tailwind v4** (CSS-first config)
+- **Prisma + SQLite**
+- **NextAuth v5** — Credentials (bcrypt) + Google OAuth, JWT tabanlı, adapter yok
+- **Groq** (`groq-sdk`, `llama-3.3-70b-versatile`) — AI destekli ürün arama için
+- UI bileşenleri `src/components/ui/` altında shadcn/ui kullanılmadan sıfırdan yazıldı
+
+## Özellikler
+
+- **Auth**: `/login`, `/signup`, `/forgot-password`, Google ile giriş
+- **Ana sayfa**: story reel, feed (beğeni/kaydetme), "Senin için önerilenler"
+- **AI arama** (`/chat`): sohbetten bağlamsal kısıtları çıkarıp (örn. "düğünde
+  giyeceğim, rüzgarlı olacak") ürün önerileri sunar; önerilen ürüne tıklamak
+  doğrudan kaynak siteye (Amazon/Trendyol) götürür
+- **Ticaret**: `/product/[id]`, `/cart` — ödeme akışı yok, sepet sadece saklama
+  amaçlı; ürüne tıklamak kaynak siteye yönlendirir
+- **Sosyal**: `/explore`, `/messages`, `/saved`, `/activity`, `/profile/[username]`
+  (gizlilik ayarına saygılı)
+- **Ürün verisi**: `prisma/sources/` altında pluggable adapter mimarisi (Amazon,
+  Trendyol) — `npm run products:refresh` ile scrape + LLM etiketleme
+
+## Başlarken
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) adresini tarayıcıda aç.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Gerekli ortam değişkenleri için `.env.example` dosyasına bak (`GROQ_API_KEY`,
+`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`, vb.).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Daha fazla bilgi
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Projenin güncel durumu, yapılan değişiklikler ve bilinen eksikler için
+[CLAUDE.md](CLAUDE.md) dosyasına bakın — her önemli değişiklikten sonra güncellenir.

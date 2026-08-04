@@ -1,12 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { uniqueTestUser, signup, deleteTestUser } from "./helpers";
+import { uniqueTestUser, createTestUser, loginViaUI, deleteTestUser } from "./helpers";
 
 test.describe("Sepet akışı", () => {
   let user: ReturnType<typeof uniqueTestUser>;
 
   test.beforeEach(async ({ page }) => {
     user = uniqueTestUser("cart");
-    await signup(page, user);
+    await createTestUser(user);
+    await loginViaUI(page, user);
   });
 
   test.afterEach(async () => {
