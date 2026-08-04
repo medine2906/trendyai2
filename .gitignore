@@ -56,3 +56,5 @@ next-env.d.ts
 
 # large video assets (exceed GitHub's 100MB file limit)
 /public/videos
+
+.vercel
