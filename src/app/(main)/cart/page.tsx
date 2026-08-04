@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CartItemRow } from "@/components/commerce/cart-item-row";
@@ -5,8 +6,9 @@ import { formatTL } from "@/lib/utils";
 
 export default async function CartPage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const items = await db.cartItem.findMany({
-    where: { userId: session!.user.id },
+    where: { userId: session.user.id },
     include: { product: true },
     orderBy: { createdAt: "desc" },
   });

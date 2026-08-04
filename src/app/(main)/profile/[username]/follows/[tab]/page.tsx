@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,7 +15,8 @@ export default async function FollowsPage({
   if (tab !== "followers" && tab !== "following") notFound();
 
   const session = await auth();
-  const currentUserId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const currentUserId = session.user.id;
 
   const user = await db.user.findUnique({ where: { username } });
   if (!user) notFound();

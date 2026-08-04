@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { StoryReel } from "@/components/feed/story-reel";
@@ -7,7 +8,8 @@ import { getRecommendedProducts, type RecommendedProduct } from "@/lib/recommend
 
 export default async function HomePage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
 
   const [stories, posts, recommendedProducts] = await Promise.all([
     db.story.findMany({

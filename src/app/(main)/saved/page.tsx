@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Heart } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -7,8 +8,9 @@ import { formatTL } from "@/lib/utils";
 
 export default async function SavedPage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const saved = await db.savedPost.findMany({
-    where: { userId: session!.user.id },
+    where: { userId: session.user.id },
     include: { post: { include: { product: true, author: true } } },
     orderBy: { createdAt: "desc" },
   });

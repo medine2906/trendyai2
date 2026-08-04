@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ExploreGrid } from "@/components/explore/explore-grid";
 
 export default async function ExplorePage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
 
   const [products, myLikes] = await Promise.all([
     db.product.findMany({

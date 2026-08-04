@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -18,7 +19,8 @@ function timeAgo(date: Date) {
 
 export default async function ActivityPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   const [likes, comments, follows, followingIds] = await Promise.all([
     db.like.findMany({
       where: { post: { authorId: userId } },

@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PrivacyToggle } from "@/components/settings/privacy-toggle";
 
 export default async function SettingsPrivacyPage() {
   const session = await auth();
-  const user = await db.user.findUniqueOrThrow({ where: { id: session!.user.id } });
+  if (!session?.user) redirect("/login");
+  const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">

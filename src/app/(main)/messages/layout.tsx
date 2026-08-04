@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ConversationList } from "@/components/messages/conversation-list";
 
 export default async function MessagesLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
 
   const memberships = await db.conversationParticipant.findMany({
     where: { userId },
