@@ -16,6 +16,76 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: Uçtan uca test otomasyonu kuruldu — frontend+backend+DB (2026-08-04)
+Kullanıcı "her şeyi test eden bir otomasyon kur" dedi. Üç katmanlı, gerçek (mock'suz)
+bir test paketi eklendi, hepsi **izole bir test veritabanında** (`prisma/test.db`,
+gerçek `.env`'deki geliştirme verisine ASLA dokunmuyor) çalışıyor:
+1. **DB bütünlüğü** (`tests/db/integrity.test.ts`, Vitest) — bağlantı, seed ürünlerin
+   okunabilirliği, orphan FK kontrolü (CartItem/SearchHistory → User/Product),
+   username/email benzersizliği.
+2. **API** (`tests/api/*.test.ts`, Vitest) — `/api/signup` ve `/api/waitlist` route
+   handler'ları HTTP sunucusu ayağa kaldırmadan doğrudan import edilip çağrılıyor
+   (400/201/409 durumları + DB'ye gerçekten yazıldığının doğrulanması).
+3. **E2E** (`tests/e2e/*.spec.ts`, `@playwright/test`, gerçek Chromium) — kayıt,
+   giriş (doğru/yanlış şifre), korumalı sayfa yönlendirmesi, ürün→sepet akışı,
+   AI arama (chat) + arama geçmişi, keşfet grid'i + ürün detay modal'ı. 10/10 geçiyor.
+
+Kurulum kararları ve çözülen sorunlar:
+- **Ayrı `.env.test`** — `DATABASE_URL=file:./prisma/test.db`, `GROQ_API_KEY` BİLİNÇLİ
+  olarak boş (böylece `/api/chat` deterministik keyword-fallback'e düşer, testler
+  gerçek LLM'e para/gecikme harcamaz), `PORT=3100` (kullanıcının olası `npm run dev`
+  port 3000 sürecinden ayrı), `AUTH_TRUST_HOST=true` (next-auth'un prod modda
+  `UntrustedHost` hatasını önlemek için), `TEST_AUTOMATION=1`.
+- **E2E sunucusu `next dev` DEĞİL, `next build --webpack && next start`** — `next dev`
+  proje dizini başına tek instance'a izin veriyor (kilit dosyası), kullanıcının kendi
+  dev sürecini kilitleyip "Another next dev server is already running" hatası verirdi.
+  Ayrıca `next.config.ts`'e `distDir: TEST_AUTOMATION=1 ? ".next-test" : ".next"`
+  eklendi — böylece test build'i kullanıcının gerçek `.next` önbelleğini bozmuyor
+  (bkz. aşağıdaki "Önemli ders" — `.next` çakışması zaten bilinen bir tuzaktı).
+- **Rate limiting'i (bkz. aşağıdaki güvenlik girdisi) test dostu hale getirmek**:
+  `checkRateLimit` IP'yi `x-forwarded-for`/`x-real-ip` header'ından okuyor, Playwright/
+  localhost istekleri bu header'ı hiç göndermediği için TÜM testler aynı `"unknown"`
+  bucket'ını paylaşıyordu → `/api/signup` 15dk'da 5 istekle sınırlı olduğu için 5.
+  testten sonra tüm signup'lar 429 ile patlıyordu. Çözüm: sadece signup FORM'unu
+  gerçekten test eden tek bir test gerçek UI signup'ını kullanıyor; oturum açmış bir
+  kullanıcıya ihtiyaç duyan diğer tüm testler `tests/e2e/helpers.ts`'teki
+  `createTestUser()` (doğrudan Prisma+bcrypt) + `loginViaUI()` ile kullanıcı yaratıp
+  giriş yapıyor — signup endpoint'ini bir kez daha çağırmıyor.
+- **`page.context().clearCookies()` + aynı sayfada yeniden `/login`'e gitmek güvenilir
+  değil** — bir testte cookie temizliği sonrası proxy.ts hâlâ eski oturumu görüp
+  `/login`'i `/home`'a geri yönlendirdi, test "hang" gibi göründü. Çözüm: ayrı oturum
+  gereken testler `browser.newContext()` ile tamamen yeni bir context kullanıyor.
+- **Gündelik/zamanlanmış otomatik koşuda `prisma db push` KULLANILMIYOR** — Task
+  Scheduler'ın (Interactive logon, konsol yok) non-interactive stdin'i altında hem
+  `prisma db push` hem `vitest` ilk saniyede sessizce `^C` ile öldü (muhtemelen bu
+  CLI'ların stdin'e raw-mode/Ctrl+C dinleyicisi takması, gerçek TTY olmayan bir
+  stdin'de yanlış tetiklenmesi). `npm run test:db:push` (şema senkronu) artık
+  `test:all` zincirinden ÇIKARILDI, sadece şema değiştiğinde MANUEL çalıştırılması
+  gerekiyor; nightly `test:all` = seed+db+api+e2e (şema zaten kurulu olduğu için
+  buna ihtiyaç yok). Task action'ına `< NUL` stdin yönlendirmesi de eklendi (zararsız
+  ek güvence). **Yanlış teşhis edilen bir tuzak:** ilk denemelerde görevi tetikledikten
+  sonra AYNI PowerShell tool çağrısı içinde `Start-Sleep` ile bekleyip log kontrol
+  etmek görevi anlık `^C` ile öldürüyormuş gibi görünüyordu — asıl sebep budur (o
+  PowerShell tool çağrısının kendisi sonlanırken paylaşılan konsola sinyal
+  gönderiyor gibi davranıyor), CLI'ların stdin quirk'ü değil. Görevi tetikleyip
+  SONRA tamamen AYRI bir tool çağrısında log/durum kontrol etmek sorunu çözdü.
+- **Windows Task Scheduler**: "TrendAI Test Otomasyonu" adında, her gece 01:30'da
+  (mevcut "TrendAI Urun Yenile" 6 saatlik döngüsüyle çakışmayacak bir saat) `npm run
+  test:all` çalıştıran görev kaydedildi, log `%TEMP%\trendai-test-automation.log`.
+  Aynı `StartWhenAvailable`/`MultipleInstances IgnoreNew`/`RestartCount` deseni
+  kullanıldı (bkz. "Urun Yenile" görevi). Manuel tetikleme: `Start-ScheduledTask
+  -TaskName "TrendAI Test Otomasyonu"`.
+Doğrulama: `npm run test:all` hem interaktif shell'den hem gerçek zamanlanmış görev
+üzerinden (Task Scheduler ile tetiklenip log dosyasından okunarak) uçtan uca koşturuldu
+— DB 6/6, API 6/6, E2E 10/10 geçti. Bu koşu ayrıca aynı anda çalışan güvenlik-düzeltme
+oturumunun (bkz. aşağıdaki "8 güvenlik açığı düzeltildi" girdisi) test EDİLMEMİŞ diye
+işaretlediği birkaç şeyi dolaylı olarak doğruladı: `/api/signup` rate limiting'in
+gerçekten 429 döndürdüğü (manuel curl ile 6. istekte doğrulandı), CSP header'larının
+signup/login/chat/cart/explore/product sayfalarındaki hiçbir mevcut özelliği kırmadığı.
+**Doğrulanmayan/yapılmayan**: private hesap toggle'ı, `/api/chat` ve login rate
+limit'lerinin 429 davranışı E2E'de ayrıca test edilmedi; GROQ_API_KEY gerçek bir LLM
+anahtarıyla chat akışı test edilmedi (bilinçli olarak fallback moda sabitlendi).
+
 ## Durum: 8 güvenlik açığı düzeltildi (2026-08-04)
 Explore agent ile 12 kategoride (auth, API route'lar, secrets, Prisma şeması, dosya
 yükleme, XSS, CSRF, header'lar, rate limiting, dependency'ler, scraper'lar, IDOR)

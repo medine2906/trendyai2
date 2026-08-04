@@ -1,11 +1,11 @@
-// TrendyAI veritabanı şeması (SQLite, geliştirme için hafif ve kuruluma gerek duymayan bir seçim)
+// TrendyAI veritabanı şeması (Postgres — Vercel'in ephemeral/read-only dosya sistemi SQLite'ı desteklemez)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
