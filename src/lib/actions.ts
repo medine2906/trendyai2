@@ -45,7 +45,12 @@ function matchesImageSignature(mimeType: string, bytes: Buffer) {
 
 async function requireUserId() {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Oturum açmanız gerekiyor");
+  if (!session?.user?.id) {
+    // Misafir (girişsiz) kullanıcı hesaba bağlı bir işlemi (sepete ekleme,
+    // beğenme, yorum, takip, mesaj, gönderi paylaşma) tetiklediğinde sessizce
+    // çökmek yerine giriş ekranına yönlendiriyoruz.
+    redirect("/login");
+  }
   return session.user.id;
 }
 
@@ -227,7 +232,9 @@ export async function addProductComment(productId: string, content: string) {
 
 export async function createPost(formData: FormData) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Oturum açmanız gerekiyor");
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
   const userId = session.user.id;
 
   const image = formData.get("image");

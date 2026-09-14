@@ -1,12 +1,10 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ExploreGrid } from "@/components/explore/explore-grid";
 
 export default async function ExplorePage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userId = session.user.id;
+  const userId = session?.user?.id;
 
   const [products, myLikes] = await Promise.all([
     db.product.findMany({
@@ -21,7 +19,7 @@ export default async function ExplorePage() {
         sourceUrl: true,
       },
     }),
-    db.productLike.findMany({ where: { userId }, select: { productId: true } }),
+    userId ? db.productLike.findMany({ where: { userId }, select: { productId: true } }) : Promise.resolve([]),
   ]);
   const likedSet = new Set(myLikes.map((l) => l.productId));
 

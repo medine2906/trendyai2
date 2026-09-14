@@ -9,7 +9,7 @@ export default auth((req) => {
   const isAuthPage = AUTH_PAGES.includes(pathname);
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL(isAuthed ? "/home" : "/login", req.url));
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   if (isAuthPage) {
@@ -19,10 +19,9 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!isAuthed) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
+  // Herkes ana sayfa/keşfet/sohbet/ürün gibi sayfalara giriş yapmadan göz
+  // atabilir — giriş sadece hesaba bağlı sayfalarda (sepet, mesajlar, vb.)
+  // veya satın alma/mutasyon işlemlerinde sayfa/action seviyesinde isteniyor.
   return NextResponse.next();
 });
 
