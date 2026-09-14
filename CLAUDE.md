@@ -16,6 +16,62 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: Giriş ekranı "sonradan" oldu — Trendyol tarzı misafir gezinme + misafir sepeti (2026-09-14)
+Kullanıcı "Trendyol'daki gibi olsun, siteye girince her şey (feed/keşfet/AI sohbet/ürünler)
+direkt görünsün, giriş sadece hesaba bağlı bir şey (beğenme/yorum/sepete ekleme gibi)
+yapılınca istensin" dedi. Sepete eklemenin de hesapsız çalışması gerektiği ayrıca
+`AskUserQuestion` ile netleştirildi (kullanıcı "misafir sepeti" seçeneğini seçti — sadece
+`CartItem.userId`'yi login'e zorlamak yerine gerçek bir misafir-sepeti mimarisi kuruldu).
+Değişenler:
+- **`src/proxy.ts`**: eskiden `/` ve login/signup dışındaki HER route auth istiyordu. Artık
+  `PUBLIC_PREFIXES = ["/home","/explore","/chat","/product","/cart"]` herkese açık; bunun
+  dışındaki (mesajlar, bildirimler, geçmiş, kaydedilenler, ayarlar, profil, paylaşım) route'lara
+  girişsiz gidilirse `/login?callbackUrl=<geldiği-yol>` ile giriş sayfasına yönlendiriliyor.
+  `/` artık her zaman `/home`'a düşüyor (eskiden girişsizse `/login`'e gidiyordu).
+- **Misafir sepeti**: `CartItem.userId` nullable yapıldı + yeni `guestId String?` alanı eklendi
+  (migration: `prisma/migrations/20260914120000_guest_cart`, `@@unique([userId,productId])` VE
+  `@@unique([guestId,productId])` — Postgres'te NULL'lar birbirinden farklı sayıldığı için ikisi
+  aynı anda güvenle duruyor). Yeni `src/lib/guest.ts` — `getOrCreateGuestId()` (httpOnly,
+  1 yıl ömürlü `guest_id` cookie'si, sadece Server Action içinde yazılabiliyor) ve salt-okunur
+  `getGuestId()`. `src/lib/actions.ts`'teki `addToCart`/`updateCartQuantity`/`removeFromCart`
+  artık `requireUserId()` yerine `getCartOwner()` kullanıyor (giriş yapılmışsa `userId`,
+  yapılmamışsa `guestId`'ye yazıyor) — sepete eklemek için giriş ARTIK GEREKMİYOR.
+  Giriş yapıldığında (`src/lib/auth.ts`'teki `signIn` callback'i, hem Credentials hem Google
+  için) misafir sepeti otomatik hesaba taşınıyor (`mergeGuestCartInto` — aynı üründen zaten
+  hesapta varsa miktarlar toplanıyor) ve `guest_id` cookie'si temizleniyor.
+- **Kimliğe bağlı diğer eylemler** (beğenme, yorum, takip, mesaj, profil güncelleme, gizlilik,
+  gönderi paylaşma) hâlâ giriş istiyor ama artık hatayla patlamak yerine `requireUserId()`
+  içeride `redirect("/login")` çağırıyor — bu server action'lar client'tan `startTransition`
+  içinde (await'siz) çağrıldığı için Next'in `NEXT_REDIRECT` mekanizması sayesinde kullanıcı
+  otomatik `/login`'e yönlendiriliyor (Trendyol'da "beğen"e tıklayınca giriş istemesi gibi).
+  Yorum formları (`comment-list.tsx`, `product-comment-list.tsx`) client-side `useSession`
+  kontrolüyle girişsiz submit'te doğrudan `/login?callbackUrl=...`'e yönlendiriyor (sunucuya
+  hiç gitmeden, daha hızlı geri bildirim).
+- **`(main)/layout.tsx`**: artık girişsizse `redirect("/login")` yerine `MainShell`'i
+  `user={null}` ile render ediyor (unread mesaj/bildirim sorguları atlanıyor).
+  **`MainShell`**: `user` prop'u nullable oldu; girişsizken profil dropdown'ı yerine
+  "Giriş yap" linki gösteriliyor (hem masaüstü sidebar hem mobil sheet menüsünde).
+- **`home/page.tsx` / `explore/page.tsx`**: `redirect("/login")` kaldırıldı, `userId`
+  nullable; `getRecommendedProducts(userId: string | null, ...)` artık `null` alınca
+  beğeni/takip sinyali olmadan direkt "Yeni eklendi" fallback listesini dönüyor.
+- **`api/chat/route.ts`**: 401 kaldırıldı, AI arama girişsiz de çalışıyor; rate limit
+  girişliyse `userId` bazlı, girişsizse `clientIp()` bazlı; arama geçmişi (`SearchHistory`)
+  sadece giriş yapılmışsa kaydediliyor.
+- **`login`/`signup` sayfaları**: `useSearchParams` ile `callbackUrl` okuyup başarılı
+  girişte/kayıtta oraya yönlendiriyor (`Suspense` sınırı eklendi, App Router'da
+  `useSearchParams` statik prerender'da bunu istiyor).
+Doğrulama: `npx tsc --noEmit` ve `npx eslint` bu oturumda değişen tüm dosyalarda temiz
+(mevcut, ilgisiz bir test-dosyası tip hatası hariç — değişiklik öncesinde de vardı).
+**Bu ortamda çalışan bir Postgres/dev server yoktu** (uzak/sandbox oturum, `.env` ve
+`node_modules` yoktu, `npm install` bu oturumda yapıldı) — migration'ın gerçek Postgres'e
+karşı `prisma migrate dev`/`deploy` ile uygulanması ve tarayıcıda uçtan uca (misafir olarak
+gezinme → beğenmeye tıklayınca login'e düşme → sepete ekleme → giriş yapınca sepetin
+hesaba taşınması) test edilmesi gerekiyor, YAPILMADI. Ayrıca `PostCard`'daki beğen/kaydet
+butonları (LikeProductButton dahil) client-side session kontrolü YOK, sadece server action
+redirect'ine güveniyor — optimistic UI (kalp dolması vs.) girişsiz kullanıcıda kısa an
+yanlış görünüp sonra login'e düşebilir, istenirse comment-list'teki gibi client-side
+`useSession` kontrolüne çevrilebilir.
+
 ## Durum: Uçtan uca test otomasyonu kuruldu — frontend+backend+DB (2026-08-04)
 Kullanıcı "her şeyi test eden bir otomasyon kur" dedi. Üç katmanlı, gerçek (mock'suz)
 bir test paketi eklendi, hepsi **izole bir test veritabanında** (`prisma/test.db`,

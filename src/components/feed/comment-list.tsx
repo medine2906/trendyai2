@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { addComment } from "@/lib/actions";
@@ -14,6 +15,8 @@ export interface CommentData {
 
 export function CommentList({ postId, initialComments }: { postId: string; initialComments: CommentData[] }) {
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const [comments, setComments] = useState(initialComments);
   const [content, setContent] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -21,7 +24,11 @@ export function CommentList({ postId, initialComments }: { postId: string; initi
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = content.trim();
-    if (!trimmed || !session?.user) return;
+    if (!trimmed) return;
+    if (!session?.user) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+      return;
+    }
 
     setComments((prev) => [
       ...prev,

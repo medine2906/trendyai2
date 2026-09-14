@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,17 @@ import { GoogleIcon } from "@/components/ui/google-icon";
 import { AuthLayout } from "@/components/auth/auth-layout";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/home";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +46,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/home");
+    router.push(callbackUrl);
     router.refresh();
   }
 
@@ -77,7 +87,7 @@ export default function LoginPage() {
             type="button"
             variant="outline"
             className="w-full gap-2"
-            onClick={() => signIn("google", { callbackUrl: "/home" })}
+            onClick={() => signIn("google", { callbackUrl })}
           >
             <GoogleIcon className="h-4 w-4" />
             Google ile giriş yap

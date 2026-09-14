@@ -1,17 +1,27 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getGuestId } from "@/lib/guest";
 import { CartItemRow } from "@/components/commerce/cart-item-row";
 import { formatTL } from "@/lib/utils";
 
 export default async function CartPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
-  const items = await db.cartItem.findMany({
-    where: { userId: session.user.id },
-    include: { product: true },
-    orderBy: { createdAt: "desc" },
-  });
+
+  const items = session?.user
+    ? await db.cartItem.findMany({
+        where: { userId: session.user.id },
+        include: { product: true },
+        orderBy: { createdAt: "desc" },
+      })
+    : await (async () => {
+        const guestId = await getGuestId();
+        if (!guestId) return [];
+        return db.cartItem.findMany({
+          where: { guestId },
+          include: { product: true },
+          orderBy: { createdAt: "desc" },
+        });
+      })();
 
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 

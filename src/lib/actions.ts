@@ -7,6 +7,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getOrCreateGuestId } from "@/lib/guest";
 
 const ALLOWED_IMAGE_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -43,10 +44,23 @@ function matchesImageSignature(mimeType: string, bytes: Buffer) {
   }
 }
 
+// Beğenme/yorum/takip/mesaj gibi hesaba bağlı sosyal eylemler için: giriş
+// yapılmamışsa isteği başarısızlıkla değil, doğrudan /login'e yönlendirerek
+// bitirir (Trendyol'daki gibi — gezinmek serbest, kimlik gerektiren eylem
+// tetiklenince giriş ekranı devreye girer).
 async function requireUserId() {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Oturum açmanız gerekiyor");
+  if (!session?.user?.id) redirect("/login");
   return session.user.id;
+}
+
+// Sepete ekleme hesap gerektirmez: giriş yapılmışsa hesaba, yapılmamışsa bir
+// cookie'deki misafir kimliğine bağlanır (bkz. src/lib/guest.ts).
+async function getCartOwner(): Promise<{ userId: string | null; guestId: string | null }> {
+  const session = await auth();
+  if (session?.user?.id) return { userId: session.user.id, guestId: null };
+  const guestId = await getOrCreateGuestId();
+  return { userId: null, guestId };
 }
 
 export async function toggleFollow(targetUserId: string) {
@@ -157,10 +171,12 @@ export async function toggleProductLike(productId: string) {
 }
 
 export async function addToCart(productId: string, quantity = 1) {
-  const userId = await requireUserId();
+  const owner = await getCartOwner();
 
   const existing = await db.cartItem.findUnique({
-    where: { userId_productId: { userId, productId } },
+    where: owner.userId
+      ? { userId_productId: { userId: owner.userId, productId } }
+      : { guestId_productId: { guestId: owner.guestId!, productId } },
   });
 
   if (existing) {
@@ -169,25 +185,27 @@ export async function addToCart(productId: string, quantity = 1) {
       data: { quantity: existing.quantity + quantity },
     });
   } else {
-    await db.cartItem.create({ data: { userId, productId, quantity } });
+    await db.cartItem.create({ data: { userId: owner.userId, guestId: owner.guestId, productId, quantity } });
   }
 
   revalidatePath("/cart");
 }
 
 export async function updateCartQuantity(cartItemId: string, quantity: number) {
-  const userId = await requireUserId();
+  const owner = await getCartOwner();
+  const ownerWhere = owner.userId ? { userId: owner.userId } : { guestId: owner.guestId! };
   if (quantity <= 0) {
-    await db.cartItem.deleteMany({ where: { id: cartItemId, userId } });
+    await db.cartItem.deleteMany({ where: { id: cartItemId, ...ownerWhere } });
   } else {
-    await db.cartItem.updateMany({ where: { id: cartItemId, userId }, data: { quantity } });
+    await db.cartItem.updateMany({ where: { id: cartItemId, ...ownerWhere }, data: { quantity } });
   }
   revalidatePath("/cart");
 }
 
 export async function removeFromCart(cartItemId: string) {
-  const userId = await requireUserId();
-  await db.cartItem.deleteMany({ where: { id: cartItemId, userId } });
+  const owner = await getCartOwner();
+  const ownerWhere = owner.userId ? { userId: owner.userId } : { guestId: owner.guestId! };
+  await db.cartItem.deleteMany({ where: { id: cartItemId, ...ownerWhere } });
   revalidatePath("/cart");
 }
 

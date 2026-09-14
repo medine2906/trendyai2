@@ -5,6 +5,31 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getGuestId, clearGuestId } from "@/lib/guest";
+
+// Giriş yapmadan önce misafir olarak sepete eklenen ürünleri, giriş yapılan
+// hesabın sepetine taşır (aynı üründen zaten varsa miktarları toplar).
+async function mergeGuestCartInto(userId: string) {
+  const guestId = await getGuestId();
+  if (!guestId) return;
+
+  const guestItems = await db.cartItem.findMany({ where: { guestId } });
+  for (const item of guestItems) {
+    const existing = await db.cartItem.findUnique({
+      where: { userId_productId: { userId, productId: item.productId } },
+    });
+    if (existing) {
+      await db.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + item.quantity },
+      });
+      await db.cartItem.delete({ where: { id: item.id } });
+    } else {
+      await db.cartItem.update({ where: { id: item.id }, data: { userId, guestId: null } });
+    }
+  }
+  await clearGuestId();
+}
 
 async function uniqueUsernameFromEmail(email: string) {
   const base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "") || "kullanici";
@@ -56,27 +81,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider !== "google") return true;
-      if (!user.email) return false;
+      let userId = user.id as string | undefined;
 
-      let dbUser = await db.user.findUnique({ where: { email: user.email } });
-      if (!dbUser) {
-        const username = await uniqueUsernameFromEmail(user.email);
-        // Google hesapları şifreyle giriş yapamaz; rastgele, kullanılmayan bir hash tutulur.
-        const passwordHash = await bcrypt.hash(randomUUID(), 10);
-        dbUser = await db.user.create({
-          data: {
-            email: user.email,
-            name: user.name ?? username,
-            username,
-            passwordHash,
-            avatarUrl: user.image ?? null,
-          },
-        });
+      if (account?.provider === "google") {
+        if (!user.email) return false;
+
+        let dbUser = await db.user.findUnique({ where: { email: user.email } });
+        if (!dbUser) {
+          const username = await uniqueUsernameFromEmail(user.email);
+          // Google hesapları şifreyle giriş yapamaz; rastgele, kullanılmayan bir hash tutulur.
+          const passwordHash = await bcrypt.hash(randomUUID(), 10);
+          dbUser = await db.user.create({
+            data: {
+              email: user.email,
+              name: user.name ?? username,
+              username,
+              passwordHash,
+              avatarUrl: user.image ?? null,
+            },
+          });
+        }
+
+        user.id = dbUser.id;
+        (user as { username?: string }).username = dbUser.username;
+        userId = dbUser.id;
       }
 
-      user.id = dbUser.id;
-      (user as { username?: string }).username = dbUser.username;
+      if (userId) await mergeGuestCartInto(userId);
       return true;
     },
     jwt({ token, user }) {

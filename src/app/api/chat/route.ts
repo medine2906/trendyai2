@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchProducts, describeImage, groqEnabled } from "@/lib/groq";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Oturum açmanız gerekiyor" }, { status: 401 });
-  }
+  const userId = session?.user?.id ?? null;
 
-  const { allowed, retryAfterMs } = checkRateLimit(`chat:${session.user.id}`, 20, 10 * 60 * 1000);
+  // AI arama hesap gerektirmez (Trendyol'daki gibi gezinme/arama serbest) —
+  // giriş yapılmışsa kullanıcı bazında, yapılmamışsa IP bazında sınırlandırılır.
+  const rateLimitKey = userId ? `chat:${userId}` : `chat-guest:${clientIp(request)}`;
+  const { allowed, retryAfterMs } = checkRateLimit(rateLimitKey, 20, 10 * 60 * 1000);
   if (!allowed) {
     return NextResponse.json(
       { error: "Çok fazla arama yaptınız, birkaç dakika sonra tekrar deneyin" },
@@ -46,11 +47,11 @@ export async function POST(request: Request) {
     historyLabel = `[Fotoğraf] ${effectiveQuery}`;
   }
 
-  const result = await searchProducts(effectiveQuery, history ?? [], session.user.name ?? undefined);
+  const result = await searchProducts(effectiveQuery, history ?? [], session?.user?.name ?? undefined);
 
-  if (!result.clarify) {
+  if (!result.clarify && userId) {
     await db.searchHistory.create({
-      data: { userId: session.user.id, query: historyLabel },
+      data: { userId, query: historyLabel },
     });
   }
 

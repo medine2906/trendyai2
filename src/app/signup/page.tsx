@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,17 @@ import { GoogleIcon } from "@/components/ui/google-icon";
 import { AuthLayout } from "@/components/auth/auth-layout";
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/home";
   const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,11 +54,11 @@ export default function SignupPage() {
     setLoading(false);
 
     if (result?.error) {
-      router.push("/login");
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
 
-    router.push("/home");
+    router.push(callbackUrl);
     router.refresh();
   }
 
@@ -109,7 +119,7 @@ export default function SignupPage() {
             type="button"
             variant="outline"
             className="w-full gap-2"
-            onClick={() => signIn("google", { callbackUrl: "/home" })}
+            onClick={() => signIn("google", { callbackUrl })}
           >
             <GoogleIcon className="h-4 w-4" />
             Google ile devam et

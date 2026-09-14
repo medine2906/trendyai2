@@ -13,7 +13,22 @@ export interface RecommendedProduct {
   reason: string;
 }
 
-export async function getRecommendedProducts(userId: string, take = 12): Promise<RecommendedProduct[]> {
+export async function getRecommendedProducts(userId: string | null, take = 12): Promise<RecommendedProduct[]> {
+  if (!userId) {
+    const fallback = await db.product.findMany({ orderBy: { createdAt: "desc" }, take });
+    return fallback.map((product) => ({
+      id: product.id,
+      name: product.name,
+      imageUrl: product.imageUrl,
+      price: product.price,
+      category: product.category,
+      sourceSite: product.sourceSite,
+      sourceUrl: product.sourceUrl,
+      likedByMe: false,
+      reason: "Yeni eklendi",
+    }));
+  }
+
   const [myLikes, followingRows] = await Promise.all([
     db.productLike.findMany({
       where: { userId },
