@@ -1,11 +1,20 @@
-import { redirect } from "next/navigation";
+import { Lock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PrivacyToggle } from "@/components/settings/privacy-toggle";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 export default async function SettingsPrivacyPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={Lock}
+        title="Ayarları görmek için giriş yap"
+        description="Hesap gizliliğini yönetmek için giriş yapmalısın."
+      />
+    );
+  }
   const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
 
   return (

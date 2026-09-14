@@ -1,12 +1,21 @@
-import { redirect } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CartItemRow } from "@/components/commerce/cart-item-row";
 import { formatTL } from "@/lib/utils";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 export default async function CartPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={ShoppingCart}
+        title="Sepetini görmek için giriş yap"
+        description="Bir ürünü sepete eklemek ve saklamak için hesabına giriş yapmalısın."
+      />
+    );
+  }
   const items = await db.cartItem.findMany({
     where: { userId: session.user.id },
     include: { product: true },

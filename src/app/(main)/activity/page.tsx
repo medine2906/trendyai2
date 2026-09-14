@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar } from "@/components/ui/avatar";
-import { Heart, UserPlus } from "lucide-react";
+import { Heart, UserPlus, Bell } from "lucide-react";
 import { SuggestionList } from "@/components/feed/suggestion-card";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 function timeAgo(date: Date) {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -19,7 +19,15 @@ function timeAgo(date: Date) {
 
 export default async function ActivityPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={Bell}
+        title="Bildirimleri görmek için giriş yap"
+        description="Beğeniler, yorumlar ve takipçilerin burada görünür."
+      />
+    );
+  }
   const userId = session.user.id;
   const [likes, comments, follows, followingIds] = await Promise.all([
     db.like.findMany({

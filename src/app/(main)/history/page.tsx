@@ -1,12 +1,20 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ChevronRight, MessageSquare } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 export default async function HistoryPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={MessageSquare}
+        title="Geçmişi görmek için giriş yap"
+        description="Giriş yapmadan da AI ile arama yapabilirsin, ama geçmiş aramaların ancak hesabına giriş yaptığında kaydedilir."
+      />
+    );
+  }
   const searches = await db.searchHistory.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },

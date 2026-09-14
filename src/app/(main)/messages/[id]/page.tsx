@@ -1,14 +1,24 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { MessageSquare } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { MessageComposer } from "@/components/messages/message-composer";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={MessageSquare}
+        title="Mesajları görmek için giriş yap"
+        description="Sohbetlerine erişmek için hesabına giriş yapmalısın."
+      />
+    );
+  }
   const userId = session.user.id;
 
   const conversation = await db.conversation.findUnique({

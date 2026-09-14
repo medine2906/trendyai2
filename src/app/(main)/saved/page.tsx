@@ -1,14 +1,22 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Heart } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { formatTL } from "@/lib/utils";
+import { GuestGate } from "@/components/layout/guest-gate";
 
 export default async function SavedPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    return (
+      <GuestGate
+        icon={Heart}
+        title="Kaydedilenleri görmek için giriş yap"
+        description="Kaydettiğin gönderiler burada listelenir."
+      />
+    );
+  }
   const saved = await db.savedPost.findMany({
     where: { userId: session.user.id },
     include: { post: { include: { product: true, author: true } } },
