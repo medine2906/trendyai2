@@ -23,6 +23,23 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: Keşfet'te tıklanan üründen büyüyerek açılan tam ekran görünüm (2026-09-15)
+Kullanıcı "keşfette bir ürüne basınca Instagram'daki gibi büyüyerek açılsın" dedi. Önceden
+`ExploreFeed` modalı geçişsiz/aniden açılıyordu. Eklenen: `ExploreGrid` artık tıklanan karenin
+`getBoundingClientRect()`'ini (`OpenOrigin`) `ExploreFeed`'e prop olarak geçiriyor;
+`ExploreFeed` mount olduğunda overlay'in `clip-path`'ini önce tıklanan karenin tam boyutuna
+(`inset(...)`) sabitleyip bir sonraki frame'de `inset(0)`'a (tam ekran) CSS transition'la
+(240ms ease) genişletiyor — kapatma da aynı animasyonun tersini oynatıp `onClose`'u
+`setTimeout` ile transition süresi kadar geciktiriyor. Harici kütüphane eklenmedi (native
+`clip-path` + `requestAnimationFrame`). Video desteği kullanıcının "şimdi değil" demesi
+nedeniyle bilinçli olarak eklenmedi.
+Doğrulama: Aynı yerel Postgres/Playwright kurulumuyla `/explore` sayfasında gerçek bir tıklama
+yapılıp geçişin ORTASINDA (click'ten ~60ms sonra) ve tamamen açıldıktan sonra ekran görüntüsü
+alındı — karenin gerçekten büyüyerek tam ekranı kapladığı doğrulandı. `npx tsc --noEmit` ve
+`npx eslint` temiz. **Test edilmedi**: kapanış animasyonu (X butonuna basınca geri küçülme)
+görsel olarak ayrıca doğrulanmadı — sadece kodun aynı mekanizmayı tersine çalıştırdığı
+okunarak doğrulandı; mobilde/dar ekranda test edilmedi.
+
 ## Durum: UI Instagram'dan ayrıştırıldı + ana sayfaya gerçek sosyal rail eklendi (2026-09-15)
 Kullanıcı "UI Instagram'a çok benziyor" dedi. Kök neden bulundu: `src/app/globals.css`'teki
 renk tokenleri (`--background`/`--foreground`/`--accent` vb.) literal olarak IG'nin siyah/

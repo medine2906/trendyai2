@@ -192,7 +192,17 @@ mu? Bu büyük bir karar çünkü:
       geçirildi (bkz. CLAUDE.md); tarayıcıda gerçekten doğrulandı (ekran görüntüleri alındı)
 - [x] Faz 5: Ana sayfa mock sosyal özellikler — sağ rail (takip önerileri + son bildirimler)
       eklendi, GERÇEK kullanıcı verisiyle çalışıyor (bkz. CLAUDE.md)
-- [ ] Faz 6: Explore büyüme animasyonu (video HARİÇ — kullanıcı "şimdi değil" dedi)
+- [x] Faz 6: Explore büyüme animasyonu — tıklanan üründen tam ekrana clip-path ile
+      büyüyen geçiş eklendi, tarayıcıda doğrulandı (bkz. CLAUDE.md). Video HARİÇ
+      (kullanıcı "şimdi değil" dedi, eklenmedi)
+
+## Tüm fazlar tamamlandı (2026-09-15)
+Konuşmada istenen 6 fazın hepsi (isim değişikliği, DB kararı netleştirme, ürün etiketleme
+derinleştirme, UI renk paleti, ana sayfa sosyal rail, explore büyüme animasyonu) bu oturumda
+uygulandı ve `claude/llm-training-product-recommendation-x4b5nz` dalına push edildi. Kalan
+tek açık konu: gerçek bir bulut Postgres bağlantısı (yukarıdaki "ÖNEMLİ" notuna bakın) —
+kullanıcı hazır olduğunda ele alınacak. Video desteği ve avatar/deneme özelliği bilinçli
+olarak kapsam dışı bırakıldı.
 
 ## ÖNEMLİ: "SQLite'ta kal" kararı gerçekte uygulanamıyor
 Bu oturumda keşfedildi: `prisma/schema.prisma` bu repoda zaten `provider = "postgresql"` —

@@ -14,8 +14,10 @@ type ExploreProduct = {
   likedByMe: boolean;
 };
 
+export type OpenOrigin = { top: number; left: number; right: number; bottom: number };
+
 export function ExploreGrid({ products }: { products: ExploreProduct[] }) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [opened, setOpened] = useState<{ index: number; origin: OpenOrigin } | null>(null);
 
   return (
     <>
@@ -24,7 +26,13 @@ export function ExploreGrid({ products }: { products: ExploreProduct[] }) {
           <button
             key={product.id}
             type="button"
-            onClick={() => setOpenIndex(index)}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setOpened({
+                index,
+                origin: { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom },
+              });
+            }}
             className="group relative block overflow-hidden text-left"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -42,8 +50,13 @@ export function ExploreGrid({ products }: { products: ExploreProduct[] }) {
         ))}
       </div>
 
-      {openIndex !== null && (
-        <ExploreFeed products={products} startIndex={openIndex} onClose={() => setOpenIndex(null)} />
+      {opened !== null && (
+        <ExploreFeed
+          products={products}
+          startIndex={opened.index}
+          origin={opened.origin}
+          onClose={() => setOpened(null)}
+        />
       )}
     </>
   );
