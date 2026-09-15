@@ -204,6 +204,19 @@ tek açık konu: gerçek bir bulut Postgres bağlantısı (yukarıdaki "ÖNEMLİ
 kullanıcı hazır olduğunda ele alınacak. Video desteği ve avatar/deneme özelliği bilinçli
 olarak kapsam dışı bırakıldı.
 
+## Kullanıcı gerçek bir Neon DATABASE_URL verdi (2026-09-15, sonraki oturum)
+Kullanıcı `neon.tech`'te ücretsiz bir proje açıp gerçek bir `DATABASE_URL` paylaştı. Bu
+oturumda `.env`'e eklenip `npx prisma migrate deploy` denendi ama **bu oturumun çalıştığı
+sanal ortamın dış ağ erişimi bir organizasyon izin listesiyle kısıtlı** — Neon'un AWS
+host'una (`*.aws.neon.tech`) hem ham Postgres (5432) hem HTTPS (443) bağlantısı
+**403 (policy denial)** ile reddedildi (agent proxy status endpoint'inde
+`connect_rejected` olarak loglandı). Yani bu, kullanıcının verdiği bilgilerle veya kodla
+ilgili bir sorun DEĞİL — sadece BU oturumun sanal ortamından test edilemiyor. Kullanıcı bir
+sonraki adımda bu DATABASE_URL'i Vercel projesinin environment variable'larına eklerse
+(Vercel'in kendi ağı bu host'a erişebilir, buradaki kısıtlama Vercel'de yok), hem DB hem de
+gerçek bir "sayfa linki" (canlı URL) aynı anda elde edilmiş olur. `.env`'deki gerçek
+şifre bu oturuma özel, git'e commit edilmedi.
+
 ## ÖNEMLİ: Postgres bağlantısı şart, ama kullanıcı şimdilik bekletiyor
 Bu oturumda keşfedildi: `prisma/schema.prisma` bu repoda zaten `provider = "postgresql"` —
 gerçekte kalınabilecek bir SQLite modu yok, uygulamanın çalışması için MUTLAKA gerçek bir
