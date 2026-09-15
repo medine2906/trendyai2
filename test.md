@@ -170,17 +170,21 @@ mu? Bu büyük bir karar çünkü:
    üzerine genel/kategori-bağımsız bir isim seçildi: **ShopMind**. Uygulandı
    (bkz. CLAUDE.md'deki "İsim değişikliği" durum kaydı) — kod, UI metinleri,
    `package.json`, dokümantasyon güncellendi.
-2. **Supabase**: Evet, şimdi geçilecek. *(Not: gerçek bir Supabase projesi
-   kurmak — proje oluşturma, connection string alma — bir web hesabı işlemi,
-   ben burada otomatik yapamam. Bir sonraki adımda: Prisma şemasını
-   `provider = "postgresql"`e hazırlayacağım ve sana `supabase.com`'da proje
-   oluşturup `DATABASE_URL`'i `.env`'e eklemen için net adımlar vereceğim.)*
+2. **Supabase**: İlk onaydan sonra kullanıcının Supabase ücretsiz hakkı
+   bittiği ortaya çıktı. Alternatif olarak Google Cloud SQL denendi ama bu
+   oturuma bağlı Google eklentileri sadece **Gmail/Google Calendar/Google
+   Drive** — gerçek bir Google Cloud Platform (Cloud SQL/altyapı) bağlantısı
+   YOK, yani otomatik bir Postgres instance'ı kuramıyorum (Supabase'de de
+   aynı sınır vardı — ikisi de manuel konsol işlemi gerektiriyor). Kullanıcı
+   bu bilgiyle **"şimdilik SQLite'ta kal"** dedi — bulut DB kararı
+   ertelendi, kullanıcı hazır olduğunda (yeni bir Supabase hesabı, Google
+   Cloud SQL manuel kurulum, ya da Neon/Railway gibi bir alternatif) tekrar
+   ele alınacak.
 3. **Uygulama tarzı**: Hepsi sırayla, sormadan yapılacak.
 
 ## Sıradaki adımlar
 - [x] Faz 1: İsim değişikliği (TrendAI → ShopMind)
-- [ ] Faz 2: Supabase/Postgres'e geçiş için Prisma şema hazırlığı + kullanıcıya
-      bağlantı bilgisi adımları
+- [ ] Faz 2: Veritabanı bulut geçişi — **ERTELENDİ** (kullanıcı hazır olunca)
 - [ ] Faz 3: Ürün etiketleme derinleştirme
 - [ ] Faz 4: UI yenileme (Instagram'dan ayrışan kimlik)
 - [ ] Faz 5: Ana sayfa mock sosyal özellikler (takip önerileri, bildirimler)
