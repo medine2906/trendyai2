@@ -204,8 +204,11 @@ tek açık konu: gerçek bir bulut Postgres bağlantısı (yukarıdaki "ÖNEMLİ
 kullanıcı hazır olduğunda ele alınacak. Video desteği ve avatar/deneme özelliği bilinçli
 olarak kapsam dışı bırakıldı.
 
-## ÖNEMLİ: "SQLite'ta kal" kararı gerçekte uygulanamıyor
+## ÖNEMLİ: Postgres bağlantısı şart, ama kullanıcı şimdilik bekletiyor
 Bu oturumda keşfedildi: `prisma/schema.prisma` bu repoda zaten `provider = "postgresql"` —
-yani gerçekte kalınabilecek bir SQLite modu yok, uygulamanın çalışması için MUTLAKA gerçek
-bir Postgres `DATABASE_URL` gerekiyor (Supabase/Google Cloud SQL/Neon/Railway/başka biri).
-"Şimdilik SQLite'ta kal" kararı bu bilgi olmadan verildi — kullanıcıya tekrar sorulmalı.
+gerçekte kalınabilecek bir SQLite modu yok, uygulamanın çalışması için MUTLAKA gerçek bir
+Postgres `DATABASE_URL` gerekiyor (Supabase/Google Cloud SQL/Neon/Railway/başka biri).
+Kullanıcıya bu netleştirildikten sonra (Supabase/Neon/GCP/bekle seçenekleri sunuldu)
+**"şimdilik bekle"** dedi — DB bağlantısı kurulmadı, kod hazır. Kullanıcı bir
+`DATABASE_URL` sağladığında: `.env`'e eklenip `npx prisma migrate deploy` çalıştırılması
+yeterli (şema zaten Postgres'e göre hazır, ek bir migration/kod değişikliği gerekmiyor).
