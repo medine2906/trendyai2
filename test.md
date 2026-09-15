@@ -188,6 +188,14 @@ mu? Bu büyük bir karar çünkü:
 - [x] Faz 3: Ürün etiketleme derinleştirme (bkz. CLAUDE.md — "Ürün etiketleme
       derinleştirildi" durum kaydı; gerçek LLM ile bu ortamda test edilemedi,
       kullanıcının kendi ortamında doğrulaması gerekiyor)
-- [ ] Faz 4: UI yenileme (Instagram'dan ayrışan kimlik)
-- [ ] Faz 5: Ana sayfa mock sosyal özellikler (takip önerileri, bildirimler)
+- [x] Faz 4: UI yenileme — renk paleti IG'nin siyah/beyazından parşömen/terrakotaya
+      geçirildi (bkz. CLAUDE.md); tarayıcıda gerçekten doğrulandı (ekran görüntüleri alındı)
+- [x] Faz 5: Ana sayfa mock sosyal özellikler — sağ rail (takip önerileri + son bildirimler)
+      eklendi, GERÇEK kullanıcı verisiyle çalışıyor (bkz. CLAUDE.md)
 - [ ] Faz 6: Explore büyüme animasyonu (video HARİÇ — kullanıcı "şimdi değil" dedi)
+
+## ÖNEMLİ: "SQLite'ta kal" kararı gerçekte uygulanamıyor
+Bu oturumda keşfedildi: `prisma/schema.prisma` bu repoda zaten `provider = "postgresql"` —
+yani gerçekte kalınabilecek bir SQLite modu yok, uygulamanın çalışması için MUTLAKA gerçek
+bir Postgres `DATABASE_URL` gerekiyor (Supabase/Google Cloud SQL/Neon/Railway/başka biri).
+"Şimdilik SQLite'ta kal" kararı bu bilgi olmadan verildi — kullanıcıya tekrar sorulmalı.

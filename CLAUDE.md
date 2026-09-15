@@ -23,6 +23,46 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: UI Instagram'dan ayrıştırıldı + ana sayfaya gerçek sosyal rail eklendi (2026-09-15)
+Kullanıcı "UI Instagram'a çok benziyor" dedi. Kök neden bulundu: `src/app/globals.css`'teki
+renk tokenleri (`--background`/`--foreground`/`--accent` vb.) literal olarak IG'nin siyah/
+beyaz/gri paletiyle AYNIYDI (`#000000`/`#ffffff`, accent bile foreground'la aynı) — CLAUDE.md'nin
+önceki "DESIGN.md editorial tema uygulandı" kaydı bu repoya hiç commit edilmemiş (git log'da
+`globals.css` için sadece 2 commit var, ikisi de bu oturumdan önce) — yani o çalışma kullanıcının
+yerel makinesinde kalmış, bu GitHub reposuna hiç yansımamış. Düzeltme: `:root`/`.dark` token'ları
+parşömen/is-siyahı/terrakota paletine çevrildi (`--background:#f6f1e7`, `--foreground:#17140f`,
+`--accent:#af4b2f`, dark mode simetrik warm-dark karşılığıyla) — component'lerdeki `rounded-none`
+(0px radius, zaten uygulanmıştı) korundu. Ayrıca kullanıcının "ana sayfada takip önerisi/
+bildirim gibi sosyal medya araçları olsun, mock data olabilir ama gerçek giriş yapanlardan"
+isteği için yeni `src/components/feed/home-right-rail.tsx` eklendi: `/activity` sayfasındaki
+MEVCUT gerçek sorgu desenleri (öneri: `db.user.findMany` takip edilmeyenler, bildirim:
+`Like`/`Follow` tablolarından son olaylar) home page'e taşındı — yani rail GERÇEK kayıtlı
+kullanıcı verisi gösteriyor (öneri algoritması basit/"mock" ama veri sahte değil). Ana sayfa
+düzeni tek sütun (IG tarzı) yerine feed + sağ rail (lg+ ekranlarda) iki sütuna çevrildi
+(`src/app/(main)/home/page.tsx`).
+Doğrulama: Bu ortamda `npm install` çalıştırıldı (önceden `node_modules` yoktu), YEREL bir
+Postgres instance'ı (`service postgresql start` + `shopmind_dev` db — kullanıcının bulut
+kararından tamamen bağımsız, sadece bu oturumun görsel doğrulaması için, hiçbir kalıcı/bulut
+kaynak kullanılmadı) kuruldu, `prisma migrate deploy` ile şema uygulandı (şemanın datasource
+provider'ı zaten `postgresql` — bkz. aşağıdaki önemli not), birkaç örnek kullanıcı/gönderi/
+ürünle seed edilip gerçek Playwright ile giriş yapılıp `/home`, `/explore`, `/chat`,
+`/activity`, `/profile/[username]` sayfalarının hem açık hem koyu temada ekran görüntüsü
+alındı — yeni palet tutarlı uygulanmış, hiçbir sayfa kırılmamış. `npx tsc --noEmit` ve
+`npx eslint` temiz. Kullanılan geçici `.env`/local DB bu ortama özel, git'e commit edilmedi
+(`.env` zaten `.gitignore`'da), depoya sadece kod değişiklikleri gidiyor.
+**ÖNEMLİ KEŞİF**: `prisma/schema.prisma`'daki `datasource db` bloğu bu repoda ZATEN
+`provider = "postgresql"` (dosyanın en üstünde "Vercel'in ephemeral dosya sistemi SQLite'ı
+desteklemez" yorumu var) — yani bu GitHub reposu/dalı, CLAUDE.md'nin geçmiş kayıtlarının
+varsaydığı gibi SQLite değil, zaten Postgres bekliyor (muhtemelen ayrı bir Vercel deployment
+hazırlığı, kullanıcının yerel Windows oturumundan bağımsız). Kullanıcı "şimdilik SQLite'ta
+kal" dediğinde bu gerçeklik bilinmiyordu — gerçekte kalınacak bir SQLite modu YOK, DB çalışması
+için gerçek bir `DATABASE_URL` (Supabase/Cloud SQL/Neon/Railway, herhangi biri) şart. Bu,
+kullanıcıya ayrıca açıklanmalı; en son mesajımda bu netleştirilecek.
+**Yapılmadı**: SuggestionRow (`suggestion-card.tsx`) hâlâ eski `text-primary` (siyah/beyaz)
+kullanıyor, yeni `--accent` tokenine geçirilmedi (bilinçli — mevcut komponent birden çok
+sayfada paylaşılıyor, kapsamı büyütmemek için dokunulmadı). Mobil (dar ekran) görünüm test
+edilmedi, sadece 1440px masaüstü genişliğinde doğrulandı.
+
 ## Durum: Ürün etiketleme derinleştirildi — bağlamsal/fiziksel etiketler (2026-09-15)
 `prisma/classify-products.ts` genişletildi (bkz. `test.md` Faz 3): (1) LLM'e artık
 sadece name/description/category değil, doluysa `rawDescription` ve `specifications`
