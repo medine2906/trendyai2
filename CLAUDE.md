@@ -23,6 +23,36 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: Ürün etiketleme derinleştirildi — bağlamsal/fiziksel etiketler (2026-09-15)
+`prisma/classify-products.ts` genişletildi (bkz. `test.md` Faz 3): (1) LLM'e artık
+sadece name/description/category değil, doluysa `rawDescription` ve `specifications`
+de gönderiliyor (bu alanlar şemada duruyordu ama hiçbir adapter/script tarafından
+kullanılmıyordu); (2) LLM sistem promptu artık ürünlerin SADECE giyim olmayabileceğini
+(elektronik, ev eşyası vb.) belirtiyor ve etiketleri kategoriye göre uydurmasını
+söylüyor — "ShopMind" artık kategori-bağımsız olduğu için; (3) en önemlisi, prompt
+artık kullanıcıların sohbette sorduğu türden FİZİKSEL/BAĞLAMSAL kullanım senaryolarına
+(hava koşulu uygunluğu — "rüzgarda uçuşabilir/uçuşmaz", "yağmurda ıslanır", "suya
+dayanıklı"; hareket kolaylığı — "hareket serbestliği sağlar/hareketi kısıtlar";
+konfor/dayanıklılık) karşılık gelen somut etiketler üretmesini istiyor, uydurma etiket
+eklememesi konusunda uyarılıyor. Bu, `src/lib/groq.ts`'teki mevcut `extractSearchIntent`
++ `findCandidateProducts` pipeline'ının (avoidKeywords/mustHaveKeywords, ürün `tags`
+alanına karşı eşleştiriliyor) doğrudan besleyicisi — yani "rüzgarlı havada uçuşmasın"
+gibi bir istek artık hem LLM'in anlık akıl yürütmesine hem de önceden üretilmiş somut
+etiketlere dayanabiliyor. Regex/anahtar-kelime yedek yolu (`GROQ_API_KEY` yoksa) da
+paralel güncellendi: `regexClassify` artık `rawDescription`'ı da tarıyor, ve
+`CONTEXT_TAGS_BY_SILHOUETTE` haritası (`salaş`/`pileli`/`şifon` → "rüzgarda uçuşabilir",
+`dar kesim`/`streç` → "rüzgarda uçuşmaz" vb.) mevcut silüet etiketlerinden bağlamsal
+etiketler türetiyor — yani LLM yokken bile temel düzeyde bağlamsal etiketleme çalışıyor.
+**Doğrulanmadı**: Bu ortamda `node_modules`/`.env`/gerçek `GROQ_API_KEY` yok, bu yüzden
+script çalıştırılıp gerçek bir LLM çıktısı görülemedi — sadece kod okunarak/statik
+olarak doğrulandı (mevcut fonksiyon imzaları ve Prisma `Product` tipiyle uyumlu).
+Kullanıcının kendi ortamında bir sonraki adım: `FORCE_RECLASSIFY=1 npx tsx
+prisma/classify-products.ts` ile birkaç ürünü yeniden etiketleyip DB'den örnek
+satırlarda yeni bağlamsal etiketlerin gerçekten üretildiğini kontrol etmek.
+`specifications`/`rawDescription` alanlarını henüz hiçbir kaynak adapter'ı doldurmuyor
+(bkz. CLAUDE.md'deki "Çoklu-kaynak adapter mimarisi" durumu) — bu alanlar dolu
+geldiğinde LLM'e otomatik olarak iletilecek, adapter'ları doldurmak ayrı bir iş.
+
 ## Durum: İsim değişikliği TrendAI → ShopMind (2026-09-15)
 Kullanıcı, "TrendAI" isminin "Trendyol" ile karışabileceğini (hukuki risk) ve ürünün
 sadece giyimle sınırlı olmayacağını (genel ürün önerisi — giyim, elektronik, vb.)

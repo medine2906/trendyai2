@@ -59,12 +59,32 @@ function detectFabric(haystack: string): string | null {
   return null;
 }
 
+// Kesim/silüet etiketinden, sohbette sık sorulan fiziksel/bağlamsal kullanım
+// senaryolarına (rüzgar, hareket kolaylığı vb.) dair ek etiketler türetir.
+const CONTEXT_TAGS_BY_SILHOUETTE: Record<string, string[]> = {
+  salaş: ["rüzgarda uçuşabilir"],
+  pileli: ["rüzgarda uçuşabilir"],
+  şifon: ["rüzgarda uçuşabilir", "yağmurda ıslanır"],
+  "dar kesim": ["rüzgarda uçuşmaz"],
+  streç: ["hareket serbestliği sağlar", "rüzgarda uçuşmaz"],
+};
+
 function detectSilhouetteTags(haystack: string): string[] {
-  return SILHOUETTE_PATTERNS.filter(({ pattern }) => pattern.test(haystack)).map(({ tag }) => tag);
+  const silhouetteTags = SILHOUETTE_PATTERNS.filter(({ pattern }) => pattern.test(haystack)).map(
+    ({ tag }) => tag
+  );
+  const contextTags = silhouetteTags.flatMap((tag) => CONTEXT_TAGS_BY_SILHOUETTE[tag] ?? []);
+  return [...silhouetteTags, ...contextTags];
 }
 
-function regexClassify(name: string, description: string, category: string, existingTags: string) {
-  const haystack = `${name} ${description}`;
+function regexClassify(
+  name: string,
+  description: string,
+  category: string,
+  existingTags: string,
+  rawDescription?: string | null
+) {
+  const haystack = `${name} ${description} ${rawDescription ?? ""}`;
   const fabric = detectFabric(haystack);
 
   let warmth: "warm" | "cool" | "neutral";
@@ -126,14 +146,28 @@ async function classifyBatchWithLlm(
         {
           role: "system",
           content:
-            "Sen bir moda kataloğu etiketleme uzmanısın. Sana ürün adı/açıklama/kategori içeren bir liste " +
-            "verilecek. Her ürün için: (1) fabric — baskın kumaş (örn. Pamuk, Keten, Yün, Kadife, Deri, Denim, " +
-            "Polyester, Viskon, Gabardin) belirlenemiyorsa null; (2) season — 'Yaz', 'Kış' veya 'Dört Mevsim' " +
-            "(kumaş/kalınlık/kategoriye göre); (3) tags — Türkçe, virgülsüz kısa anahtar kelimelerden oluşan bir " +
-            "dizi: sıcaklık hissi (örn. 'serin tutar', 'nefes alan', 'sıcak tutar', 'kalın'), kesim/silüet (örn. " +
-            "'dar kesim', 'salaş', 'kalem kesim', 'mini', 'midi', 'maxi', 'pileli'), varsa stil/kullanım alanı " +
-            "(örn. 'günlük', 'şık', 'spor', 'ofis'); (4) aiSummary — ürünü tek kısa cümleyle Türkçe özetleyen bir " +
-            "açıklama (arama sonuçlarında gösterilecek). " +
+            "Sen bir ürün kataloğu etiketleme uzmanısın. Sana ürün adı/açıklama/kategori (varsa ham kaynak " +
+            "açıklaması `rawDescription` ve kaynak sitenin yapılandırılmış özellik verisi `specifications`) " +
+            "içeren bir liste verilecek. Bu ürünler SADECE giyim olmayabilir (elektronik, ev eşyası, aksesuar " +
+            "vb. de olabilir) — etiketleri ürünün gerçek kategorisine göre uydur, giyime özgü etiketleri " +
+            "giyim dışı ürünlere zorlama. Her ürün için: " +
+            "(1) fabric — giyimse baskın kumaş (örn. Pamuk, Keten, Yün, Kadife, Deri, Denim, Polyester, Viskon, " +
+            "Gabardin), giyim değilse veya belirlenemiyorsa null; " +
+            "(2) season — giyimse 'Yaz'/'Kış'/'Dört Mevsim', giyim dışı ürünlerde de mevsimsel bir kullanım " +
+            "öne çıkıyorsa (örn. klima, mont) uygula, yoksa 'Dört Mevsim'; " +
+            "(3) tags — Türkçe, virgülsüz kısa anahtar kelimelerden oluşan bir dizi. Şu kategorilerden ÜRÜNE " +
+            "uyanları ekle: sıcaklık hissi ('serin tutar', 'nefes alan', 'sıcak tutar', 'kalın'), kesim/silüet " +
+            "('dar kesim', 'salaş', 'kalem kesim', 'mini', 'midi', 'maxi', 'pileli'), stil/kullanım alanı " +
+            "('günlük', 'şık', 'spor', 'ofis'), ve ÖNEMLİ — kullanıcıların sohbette sorduğu FİZİKSEL/BAĞLAMSAL " +
+            "kullanım senaryolarını karşılayan etiketler: hava koşulu uygunluğu (geniş/uçuşan etek/elbise ise " +
+            "'rüzgarda uçuşabilir', dar/oturan kesimse 'rüzgarda uçuşmaz', su geçirmez/suya dayanıklı kumaş/ürünse " +
+            "'suya dayanıklı', ince/şeffaf kumaşsa 'yağmurda ıslanır'), hareket kolaylığı (streç/esnek kumaş ya " +
+            "da spor kesimse 'hareket serbestliği sağlar', dar/sert kesimse 'hareketi kısıtlar'), konfor/dayanıklılık " +
+            "(varsa 'uzun süre ayakta durmaya uygun', 'seyahate uygun', 'hafif ve taşınabilir' gibi ürüne özgü " +
+            "somut gerekçeler). Uydurma/genel geçer etiket ekleme — sadece ürünün adı/açıklamasından gerçekten " +
+            "çıkarsanabilen somut özellikleri etiketle; emin değilsen o etiketi atla. " +
+            "(4) aiSummary — ürünü tek kısa cümleyle Türkçe özetleyen bir açıklama (arama sonuçlarında " +
+            "gösterilecek). " +
             'Yanıtını JSON formatında, şu şemayla ver: {"results": [{"id": string, "fabric": string|null, "season": string, ' +
             '"tags": string[], "aiSummary": string}]}. Girdi listesindeki HER ürün için tam olarak bir sonuç ' +
             "üret, id'leri değiştirme.",
@@ -146,6 +180,8 @@ async function classifyBatchWithLlm(
               name: p.name,
               description: p.description,
               category: p.category,
+              ...(p.rawDescription ? { rawDescription: p.rawDescription } : {}),
+              ...(p.specifications ? { specifications: p.specifications } : {}),
             }))
           ),
         },
@@ -206,7 +242,13 @@ async function main() {
         });
         llmCount++;
       } else {
-        const { fabric, season, tags } = regexClassify(p.name, p.description, p.category, p.tags);
+        const { fabric, season, tags } = regexClassify(
+          p.name,
+          p.description,
+          p.category,
+          p.tags,
+          p.rawDescription
+        );
         await db.product.update({
           where: { id: p.id },
           data: { fabric, season, tags },

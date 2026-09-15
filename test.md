@@ -185,7 +185,9 @@ mu? Bu büyük bir karar çünkü:
 ## Sıradaki adımlar
 - [x] Faz 1: İsim değişikliği (TrendAI → ShopMind)
 - [ ] Faz 2: Veritabanı bulut geçişi — **ERTELENDİ** (kullanıcı hazır olunca)
-- [ ] Faz 3: Ürün etiketleme derinleştirme
+- [x] Faz 3: Ürün etiketleme derinleştirme (bkz. CLAUDE.md — "Ürün etiketleme
+      derinleştirildi" durum kaydı; gerçek LLM ile bu ortamda test edilemedi,
+      kullanıcının kendi ortamında doğrulaması gerekiyor)
 - [ ] Faz 4: UI yenileme (Instagram'dan ayrışan kimlik)
 - [ ] Faz 5: Ana sayfa mock sosyal özellikler (takip önerileri, bildirimler)
 - [ ] Faz 6: Explore büyüme animasyonu (video HARİÇ — kullanıcı "şimdi değil" dedi)
