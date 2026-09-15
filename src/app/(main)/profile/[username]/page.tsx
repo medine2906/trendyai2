@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ import { MessageButton } from "@/components/profile/message-button";
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  const currentUserId = session?.user?.id ?? null;
 
   const user = await db.user.findUnique({
     where: { username },
@@ -20,14 +20,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   });
   if (!user) notFound();
 
-  const isMe = session.user.id === user.id;
-  const alreadyFollowing = isMe
-    ? false
-    : Boolean(
-        await db.follow.findUnique({
-          where: { followerId_followingId: { followerId: session.user.id, followingId: user.id } },
-        })
-      );
+  const isMe = currentUserId === user.id;
+  const alreadyFollowing =
+    isMe || !currentUserId
+      ? false
+      : Boolean(
+          await db.follow.findUnique({
+            where: { followerId_followingId: { followerId: currentUserId, followingId: user.id } },
+          })
+        );
   const canViewPosts = isMe || !user.isPrivate || alreadyFollowing;
 
   return (

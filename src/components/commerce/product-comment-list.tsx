@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { addProductComment } from "@/lib/actions";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 export interface ProductCommentData {
   id: string;
@@ -22,6 +23,7 @@ export function ProductCommentList({
   className?: string;
 }) {
   const { data: session } = useSession();
+  const { requireAuth } = useRequireAuth();
   const [comments, setComments] = useState(initialComments);
   const [content, setContent] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -29,7 +31,8 @@ export function ProductCommentList({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = content.trim();
-    if (!trimmed || !session?.user) return;
+    if (!trimmed) return;
+    if (!requireAuth() || !session?.user) return;
 
     setComments((prev) => [
       ...prev,

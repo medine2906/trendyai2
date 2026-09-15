@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchProducts, describeImage, groqEnabled } from "@/lib/groq";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Oturum açmanız gerekiyor" }, { status: 401 });
-  }
-
-  const { allowed, retryAfterMs } = checkRateLimit(`chat:${session.user.id}`, 20, 10 * 60 * 1000);
+  // AI arama misafir kullanıcıya da açık — sadece hesaba özel işlemler
+  // (satın alma vb.) giriş ister. Kimliksiz istekler IP bazlı sınırlanır.
+  const rateLimitKey = session?.user?.id ? `chat:${session.user.id}` : `chat:ip:${clientIp(request)}`;
+  const { allowed, retryAfterMs } = checkRateLimit(rateLimitKey, 20, 10 * 60 * 1000);
   if (!allowed) {
     return NextResponse.json(
       { error: "Çok fazla arama yaptınız, birkaç dakika sonra tekrar deneyin" },
@@ -46,9 +45,9 @@ export async function POST(request: Request) {
     historyLabel = `[Fotoğraf] ${effectiveQuery}`;
   }
 
-  const result = await searchProducts(effectiveQuery, history ?? [], session.user.name ?? undefined);
+  const result = await searchProducts(effectiveQuery, history ?? [], session?.user?.name ?? undefined);
 
-  if (!result.clarify) {
+  if (!result.clarify && session?.user?.id) {
     await db.searchHistory.create({
       data: { userId: session.user.id, query: historyLabel },
     });

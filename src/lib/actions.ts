@@ -175,6 +175,35 @@ export async function addToCart(productId: string, quantity = 1) {
   revalidatePath("/cart");
 }
 
+export async function mergeGuestCart(items: { productId: string; quantity: number }[]) {
+  const userId = await requireUserId();
+  const validProductIds = new Set(
+    (
+      await db.product.findMany({
+        where: { id: { in: items.map((i) => i.productId) } },
+        select: { id: true },
+      })
+    ).map((p) => p.id)
+  );
+
+  for (const item of items) {
+    if (!validProductIds.has(item.productId) || item.quantity <= 0) continue;
+    const existing = await db.cartItem.findUnique({
+      where: { userId_productId: { userId, productId: item.productId } },
+    });
+    if (existing) {
+      await db.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + item.quantity },
+      });
+    } else {
+      await db.cartItem.create({ data: { userId, productId: item.productId, quantity: item.quantity } });
+    }
+  }
+
+  revalidatePath("/cart");
+}
+
 export async function updateCartQuantity(cartItemId: string, quantity: number) {
   const userId = await requireUserId();
   if (quantity <= 0) {

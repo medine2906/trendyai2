@@ -13,14 +13,16 @@ export interface RecommendedProduct {
   reason: string;
 }
 
-export async function getRecommendedProducts(userId: string, take = 12): Promise<RecommendedProduct[]> {
-  const [myLikes, followingRows] = await Promise.all([
-    db.productLike.findMany({
-      where: { userId },
-      select: { productId: true, product: { select: { category: true } } },
-    }),
-    db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }),
-  ]);
+export async function getRecommendedProducts(userId: string | null, take = 12): Promise<RecommendedProduct[]> {
+  const [myLikes, followingRows] = userId
+    ? await Promise.all([
+        db.productLike.findMany({
+          where: { userId },
+          select: { productId: true, product: { select: { category: true } } },
+        }),
+        db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }),
+      ])
+    : [[], []];
 
   const likedProductIds = new Set(myLikes.map((l) => l.productId));
   const followingIds = followingRows.map((f) => f.followingId);

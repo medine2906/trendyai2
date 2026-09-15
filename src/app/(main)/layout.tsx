@@ -1,12 +1,12 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MainShell } from "@/components/layout/main-shell";
+import { GuestCartMerger } from "@/components/commerce/guest-cart-merger";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login");
+    return <MainShell user={null}>{children}</MainShell>;
   }
   const userId = session.user.id;
 
@@ -50,6 +50,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       unreadMessagesCount={unreadMessagesCount}
       unreadNotificationsCount={unreadNotificationsCount}
     >
+      <GuestCartMerger />
       {children}
     </MainShell>
   );

@@ -3,13 +3,20 @@ import { auth } from "@/lib/auth";
 
 const AUTH_PAGES = ["/login", "/signin", "/signup", "/forgot-password", "/login-preview-apple"];
 
+// Sadece hesaba özel sayfalar (bildirimler, mesajlar, arama geçmişi, ayarlar,
+// kaydedilenler, gönderi paylaşma) giriş gerektirir. Ana sayfa, keşfet, sohbet
+// (AI arama), ürün detay, sepet ve profil sayfaları misafir kullanıcıya da
+// açık — giriş/kayıt sadece hesaba bağlı bir eylemde (beğenme, kaydetme,
+// takip, mesaj, sepetten hesaba geçiş vb.) istenir.
+const PROTECTED_PREFIXES = ["/messages", "/activity", "/history", "/settings", "/saved", "/create"];
+
 export default auth((req) => {
   const isAuthed = !!req.auth;
   const { pathname } = req.nextUrl;
   const isAuthPage = AUTH_PAGES.includes(pathname);
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL(isAuthed ? "/home" : "/login", req.url));
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   if (isAuthPage) {
@@ -19,8 +26,11 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!isAuthed) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  if (isProtected && !isAuthed) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

@@ -9,6 +9,7 @@ import { toggleLike, toggleSave } from "@/lib/actions";
 import { cn, formatTL } from "@/lib/utils";
 import { CommentList, type CommentData } from "@/components/feed/comment-list";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 export interface PostCardData {
   id: string;
@@ -29,8 +30,10 @@ export function PostCard({ post }: { post: PostCardData }) {
   const [saved, setSaved] = useState(post.savedByMe);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [, startTransition] = useTransition();
+  const { requireAuth } = useRequireAuth();
 
   function handleLike() {
+    if (!requireAuth()) return;
     setLiked((v) => !v);
     setLikeCount((c) => (liked ? c - 1 : c + 1));
     startTransition(() => {
@@ -39,6 +42,7 @@ export function PostCard({ post }: { post: PostCardData }) {
   }
 
   function handleSave() {
+    if (!requireAuth()) return;
     setSaved((v) => !v);
     startTransition(() => {
       toggleSave(post.id);

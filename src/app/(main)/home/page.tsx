@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { StoryReel } from "@/components/feed/story-reel";
@@ -9,8 +9,7 @@ import { getRecommendedProducts, type RecommendedProduct } from "@/lib/recommend
 
 export default async function HomePage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
   const [stories, posts, recommendedProducts, followingIds, recentLikes, recentFollows] = await Promise.all([
     db.story.findMany({
@@ -22,8 +21,8 @@ export default async function HomePage() {
       include: {
         author: true,
         product: true,
-        likes: { where: { userId } },
-        savedBy: { where: { userId } },
+        likes: { where: { userId: userId ?? "__guest__" } },
+        savedBy: { where: { userId: userId ?? "__guest__" } },
         comments: { include: { author: true }, orderBy: { createdAt: "asc" }, take: 20 },
         _count: { select: { likes: true, comments: true } },
       },
@@ -31,25 +30,31 @@ export default async function HomePage() {
       take: 20,
     }),
     getRecommendedProducts(userId),
-    db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }),
-    db.like.findMany({
-      where: { post: { authorId: userId } },
-      select: { id: true, createdAt: true, user: { select: { username: true, avatarUrl: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    }),
-    db.follow.findMany({
-      where: { followingId: userId },
-      select: { id: true, createdAt: true, follower: { select: { username: true, avatarUrl: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    }),
+    userId ? db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }) : Promise.resolve([]),
+    userId
+      ? db.like.findMany({
+          where: { post: { authorId: userId } },
+          select: { id: true, createdAt: true, user: { select: { username: true, avatarUrl: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        })
+      : Promise.resolve([]),
+    userId
+      ? db.follow.findMany({
+          where: { followingId: userId },
+          select: { id: true, createdAt: true, follower: { select: { username: true, avatarUrl: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        })
+      : Promise.resolve([]),
   ]);
 
-  const suggestions = await db.user.findMany({
-    where: { id: { notIn: [userId, ...followingIds.map((f) => f.followingId)] } },
-    take: 5,
-  });
+  const suggestions = userId
+    ? await db.user.findMany({
+        where: { id: { notIn: [userId, ...followingIds.map((f) => f.followingId)] } },
+        take: 5,
+      })
+    : [];
 
   const notifications: RailNotification[] = [
     ...recentLikes.map((l) => ({
@@ -127,10 +132,31 @@ export default async function HomePage() {
           )}
         </div>
 
-        <HomeRightRail
-          suggestions={suggestions.map((u) => ({ id: u.id, username: u.username, avatarUrl: u.avatarUrl }))}
-          notifications={notifications}
-        />
+        {userId ? (
+          <HomeRightRail
+            suggestions={suggestions.map((u) => ({ id: u.id, username: u.username, avatarUrl: u.avatarUrl }))}
+            notifications={notifications}
+          />
+        ) : (
+          <aside className="hidden lg:flex w-72 shrink-0 flex-col gap-3 border border-border bg-card p-4 py-6">
+            <h2 className="text-sm font-semibold">ShopMind&apos;e katıl</h2>
+            <p className="text-xs text-muted-foreground">
+              Beğen, kaydet, takip et ve kişiselleştirilmiş öneriler gör.
+            </p>
+            <Link
+              href="/signup?callbackUrl=/home"
+              className="mt-1 flex h-9 items-center justify-center bg-foreground text-xs font-medium text-background"
+            >
+              Kayıt Ol
+            </Link>
+            <Link
+              href="/login?callbackUrl=/home"
+              className="flex h-9 items-center justify-center border border-border text-xs font-medium"
+            >
+              Giriş Yap
+            </Link>
+          </aside>
+        )}
       </div>
     </div>
   );

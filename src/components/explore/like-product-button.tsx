@@ -5,6 +5,7 @@ import { Heart } from "lucide-react";
 import { toggleProductLike } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useRequireAuth } from "@/lib/use-require-auth";
 
 export function LikeProductButton({
   productId,
@@ -17,10 +18,12 @@ export function LikeProductButton({
 }) {
   const [liked, setLiked] = useState(likedByMe);
   const [, startTransition] = useTransition();
+  const { requireAuth } = useRequireAuth();
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (!requireAuth()) return;
     setLiked((v) => !v);
     startTransition(() => {
       toggleProductLike(productId);

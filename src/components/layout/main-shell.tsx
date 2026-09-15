@@ -52,7 +52,7 @@ export function MainShell({
   unreadNotificationsCount = 0,
 }: {
   children: React.ReactNode;
-  user: { name: string; username: string; avatarUrl: string | null };
+  user: { name: string; username: string; avatarUrl: string | null } | null;
   unreadMessagesCount?: number;
   unreadNotificationsCount?: number;
 }) {
@@ -170,42 +170,69 @@ export function MainShell({
             })}
           </nav>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <div
+                  className={cn(
+                    "flex h-11 shrink-0 items-center border-l-2",
+                    isSidebarExpanded ? "w-full gap-3 px-3" : "w-11 justify-center"
+                  )}
+                  style={{ borderColor: pathname === `/profile/${user.username}` ? "var(--foreground)" : "transparent" }}
+                >
+                  <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={24} />
+                  {isSidebarExpanded && <span className="uppercase tracking-wide text-xs">Profil</span>}
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuItem onClick={() => router.push(`/profile/${user.username}`)}>
+                  <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={16} />
+                  <span>Profilim</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
+                  <Settings className="h-4 w-4" />
+                  <span>Ayarlar</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/saved")}>
+                  <Bookmark className="h-4 w-4" />
+                  <span>Kaydedilenler</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  <span>Görünümü değiştir</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                  <span>Çıkış Yap</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div
+              className={cn(
+                "flex shrink-0 gap-1",
+                isSidebarExpanded ? "w-full flex-col px-3" : "flex-col items-center"
+              )}
+            >
+              <Link
+                href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}
                 className={cn(
-                  "flex h-11 shrink-0 items-center border-l-2",
-                  isSidebarExpanded ? "w-full gap-3 px-3" : "w-11 justify-center"
+                  "flex h-9 items-center justify-center text-xs font-medium",
+                  isSidebarExpanded ? "w-full border border-border" : "w-11"
                 )}
-                style={{ borderColor: pathname === `/profile/${user.username}` ? "var(--foreground)" : "transparent" }}
               >
-                <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={24} />
-                {isSidebarExpanded && <span className="uppercase tracking-wide text-xs">Profil</span>}
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-56">
-              <DropdownMenuItem onClick={() => router.push(`/profile/${user.username}`)}>
-                <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={16} />
-                <span>Profilim</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
-                <Settings className="h-4 w-4" />
-                <span>Ayarlar</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/saved")}>
-                <Bookmark className="h-4 w-4" />
-                <span>Kaydedilenler</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={toggleTheme}>
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                <span>Görünümü değiştir</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-                <span>Çıkış Yap</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                Giriş
+              </Link>
+              {isSidebarExpanded && (
+                <Link
+                  href={`/signup?callbackUrl=${encodeURIComponent(pathname)}`}
+                  className="flex h-9 w-full items-center justify-center bg-foreground text-xs font-medium text-background"
+                >
+                  Kayıt Ol
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </aside>
 
@@ -263,23 +290,42 @@ export function MainShell({
                       </Link>
                     );
                   })}
-                  <Link
-                    href="/settings/profile"
-                    className={cn(
-                      "flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-muted-foreground hover:text-foreground",
-                      pathname.startsWith("/settings") && "border-foreground text-foreground"
-                    )}
-                  >
-                    <Settings className="h-6 w-6" strokeWidth={2.25} />
-                    <span className="uppercase tracking-wide text-xs">Ayarlar</span>
-                  </Link>
-                  <Link
-                    href={`/profile/${user.username}`}
-                    className="flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={20} />
-                    <span className="uppercase tracking-wide text-xs">Profil</span>
-                  </Link>
+                  {user ? (
+                    <>
+                      <Link
+                        href="/settings/profile"
+                        className={cn(
+                          "flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-muted-foreground hover:text-foreground",
+                          pathname.startsWith("/settings") && "border-foreground text-foreground"
+                        )}
+                      >
+                        <Settings className="h-6 w-6" strokeWidth={2.25} />
+                        <span className="uppercase tracking-wide text-xs">Ayarlar</span>
+                      </Link>
+                      <Link
+                        href={`/profile/${user.username}`}
+                        className="flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size={20} />
+                        <span className="uppercase tracking-wide text-xs">Profil</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}
+                        className="flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <span className="uppercase tracking-wide text-xs">Giriş Yap</span>
+                      </Link>
+                      <Link
+                        href={`/signup?callbackUrl=${encodeURIComponent(pathname)}`}
+                        className="flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-foreground"
+                      >
+                        <span className="uppercase tracking-wide text-xs">Kayıt Ol</span>
+                      </Link>
+                    </>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>

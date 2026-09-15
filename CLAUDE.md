@@ -23,6 +23,61 @@ kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri a
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
 
+## Durum: Giriş/kayıt artık sadece hesaba özel eylemlerde zorunlu (2026-09-15)
+Kullanıcı "giriş ekranı sadece bir şey satın almak istendiğinde zorunlu olsun" dedi;
+netleştirme sorusunda tüm sayfaların (ana sayfa, keşfet, sohbet, ürün, sepet, profil)
+misafire açık olmasını, sepete eklemenin girişsiz çalışmasını, beğenme/kaydetmenin ise
+giriş istemesini onayladı. Önceden `src/proxy.ts` + `(main)/layout.tsx` + her sayfanın
+kendi `if (!session) redirect("/login")` bloğu yüzünden site TAMAMEN kapalıydı (auth
+sayfaları hariç). Yapılan değişiklikler:
+- `src/proxy.ts`: blanket redirect kaldırıldı, sadece hesaba özel rotalar (`/messages`,
+  `/activity`, `/history`, `/settings`, `/saved`, `/create`) `PROTECTED_PREFIXES` ile
+  korunuyor, geri kalanı (`/home`, `/explore`, `/chat`, `/product/*`, `/cart`,
+  `/profile/*`) misafire açık. Korumalı bir rotaya giden misafir artık
+  `?callbackUrl=<geldiği-sayfa>` ile `/login`'e yönleniyor.
+- `(main)/layout.tsx` + `MainShell`: `user` prop'u artık `null` olabiliyor — misafir
+  için unread sayıları/DB sorguları atlanıyor, sidebar'da avatar/profil menüsü yerine
+  "Giriş" / "Kayıt Ol" linkleri gösteriliyor.
+- `home`/`explore`/`profile/[username]`/`follows/[tab]` sayfalarındaki `redirect("/login")`
+  kaldırıldı, `userId`'ye bağlı Prisma sorguları (`likes`, `savedBy`, öneri/takip
+  sorguları) `userId ?? null`/sentinel değerle misafirde boş/atlanmış dönecek şekilde
+  güncellendi (`getRecommendedProducts` artık `userId: string | null` alıyor). Ana
+  sayfada misafir için sağ rail yerine "Kayıt Ol / Giriş Yap" CTA'sı gösteriliyor.
+- Yeni `src/lib/use-require-auth.ts` (`useRequireAuth` hook'u): beğenme (post+ürün),
+  kaydetme, takip, mesaj gönderme gibi client-side eylemler artık optimistic UI
+  güncellemesinden ÖNCE bu hook'la kontrol ediyor — misafirse eylemi hiç yapmadan
+  `callbackUrl` ile `/login`'e yönlendiriyor (önceden bu bileşenler ya sessizce no-op
+  oluyordu ya da tüm site zaten girişsiz erişilemediği için bu kod yolu hiç
+  çalışmıyordu).
+- **Sepete ekleme girişsiz de çalışıyor**: yeni `src/lib/guest-cart.ts` (localStorage
+  tabanlı misafir sepeti), `AddToCartButton` `useSession()`'a göre ya server action'ı
+  (`addToCart`, DB'ye yazar) ya da `addGuestCartItem`'ı (localStorage) çağırıyor. Yeni
+  `/api/products/by-ids` (public, auth gerektirmez) misafir sepetindeki ürün ID'lerini
+  görsel/fiyat/link ile hidratlamak için eklendi. `/cart` sayfası artık oturum varsa
+  eski DB-tabanlı listeyi, yoksa yeni client component `GuestCartView`'ı (+ satır
+  bileşeni `GuestCartItemRow`) render ediyor. Misafir sepeti girişten sonra kaybolmasın
+  diye yeni server action `mergeGuestCart` + `GuestCartMerger` (client, `(main)/layout.tsx`
+  içinde authenticated dalda mount ediliyor, mount olduğunda localStorage'daki öğeleri
+  DB'ye taşıyıp temizliyor) eklendi — hem email/şifre girişini hem Google OAuth'u kapsıyor
+  (tek merkezi yerden, login sayfasındaki manuel akışa bağımlı değil).
+- `login`/`signup` sayfaları artık `?callbackUrl=` okuyup hem credentials hem Google
+  girişinde oraya yönlendiriyor (`useSearchParams` kullandıkları için `Suspense`'e
+  sarıldılar, `chat/page.tsx`'teki mevcut desenle aynı).
+- `/api/chat` (AI arama) artık misafire de açık — `GROQ` arama sonucu/ürün önerisi
+  girişsiz çalışıyor, sadece `SearchHistory` kaydı (hesaba bağlı olduğu için) ve rate
+  limit anahtarı (`session yoksa clientIp(request)`, mevcut `rate-limit.ts`'teki
+  `clientIp` helper'ı) oturuma göre koşullu.
+Doğrulama: `npx tsc --noEmit` ve `npx eslint src` bu turda değiştirilen/eklenen HER
+dosyada temiz (repodaki 2 önceden var olan `react-hooks/set-state-in-effect` hatası —
+`morph-blob.tsx`, `product-showcase-demo-apple.tsx` — bu değişiklikten önce de vardı,
+git stash ile doğrulandı, kapsam dışı bırakıldı). **Tarayıcıda test EDİLMEDİ** — bu
+ortamda `.env`/`DATABASE_URL` yok (bkz. önceki "Neon'a ağ kapalı" notu), gerçek bir
+Postgres'e bağlanıp misafir olarak `/home`, `/explore`, `/chat`, `/product/[id]`,
+`/cart`'ı gezip sepete ekleyip, sonra giriş yapıp sepetin gerçekten hesaba taşındığını
+görsel olarak doğrulamak bir sonraki adım. Ayrıca test edilmedi: `/messages`,
+`/activity`, `/history`, `/settings`, `/saved`, `/create` rotalarının hâlâ misafiri
+gerçekten `/login`'e yönlendirdiği (kod okuma ile doğrulandı, çalıştırılmadı).
+
 ## Durum: Keşfet'te tıklanan üründen büyüyerek açılan tam ekran görünüm (2026-09-15)
 Kullanıcı "keşfette bir ürüne basınca Instagram'daki gibi büyüyerek açılsın" dedi. Önceden
 `ExploreFeed` modalı geçişsiz/aniden açılıyordu. Eklenen: `ExploreGrid` artık tıklanan karenin
