@@ -1,10 +1,10 @@
-# TrendAI
+# ShopMind
 
 ## Purpose & Vision
 
-TrendAI aims to fix a gap in traditional e-commerce platforms: products are
+ShopMind aims to fix a gap in traditional e-commerce platforms: products are
 usually presented with dry technical specs or shallow descriptions, leaving
-shoppers to guess whether an item actually fits their needs. TrendAI closes
+shoppers to guess whether an item actually fits their needs. ShopMind closes
 that gap with LLM-powered, contextual product understanding — and layers a
 social feed on top, so product discovery feels organic, interactive, and
 trust-driven rather than a plain search box.

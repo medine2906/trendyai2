@@ -21,7 +21,7 @@ const sui = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "TrendAI",
+  title: "ShopMind",
   description: "AI destekli moda keşif ve alışveriş deneyimi",
 };
 

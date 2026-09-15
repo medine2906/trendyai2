@@ -103,7 +103,7 @@ export function ProductShowcaseDemo() {
         style={{ color: "rgba(252,250,241,0.55)", marginBottom: "10px" }}
       >
         <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
-        <span>TrendAI ile sohbet</span>
+        <span>ShopMind ile sohbet</span>
       </div>
 
       {/* user chat bubble — types like a message being composed */}

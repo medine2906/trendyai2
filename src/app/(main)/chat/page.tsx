@@ -176,7 +176,7 @@ function ChatPageInner() {
       <div className="flex h-[calc(100vh-0px)] flex-col items-center justify-center gap-8 px-4">
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="text-2xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            TrendAI
+            ShopMind
           </span>
           <p className="text-sm text-muted-foreground">
             Ürünlerimiz hakkında her şeyi bana sor, ya da bir fotoğraf yükle

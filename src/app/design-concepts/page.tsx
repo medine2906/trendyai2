@@ -58,7 +58,7 @@ export default async function DesignConceptsPage() {
         style={{ borderBottom: "1px solid rgba(0,0,0,0.12)", background: "rgba(244,241,228,0.94)", backdropFilter: "blur(6px)" }}
       >
         <Link href="/design-concepts" className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)" }}>
-          TrendAI — Luxury Konsept
+          ShopMind — Luxury Konsept
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/explore" className="opacity-70 hover:opacity-100" title="Keşfet">

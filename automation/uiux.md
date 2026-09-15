@@ -1,4 +1,4 @@
-# TrendAI — UI/UX Tasarım Rehberi
+# ShopMind — UI/UX Tasarım Rehberi
 
 > Bu dosya, sitenin görsel kimliğiyle ilgili kalıcı kararları tutar. Yeni bir
 > oturum/agent tasarımla ilgili bir şey değiştirmeden önce bu dosyayı okumalı.
@@ -6,7 +6,7 @@
 
 ## 1) Amaç ve durum
 
-- **Amaç:** TrendAI'nin "sosyal + AI destekli alışveriş" kimliğini, mevcut
+- **Amaç:** ShopMind'nin "sosyal + AI destekli alışveriş" kimliğini, mevcut
   mor/krem renk paletini koruyarak "luxury" (butik/atölye hissi veren, ucuz
   görünmeyen) bir seviyeye taşımak — ama sitenin temel özelliklerini (AI ile
   sohbet arama, Keşfet/Instagram-tarzı feed, sosyal paylaşım, sepete ekleme)
@@ -65,7 +65,7 @@ içinde local scope'ta kalır (bkz. bölüm 8).
 - Explore grid'in `5px` gap değeri bir Tailwind class'ı değil inline
   `style={{gap:"5px"}}` — luxury konseptlerde bu değer korunuyor (Instagram
   tarzı "flush grid" hissi, Trendyol/Amazon'daki boşluklu kart gridinden
-  bilinçli olarak farklı, TrendAI'nin "sosyal" kimliğinin parçası).
+  bilinçli olarak farklı, ShopMind'nin "sosyal" kimliğinin parçası).
 - 8px spacing grid'e uyulur (`p-4`, `p-6`, `p-8`, `gap-4`, `gap-6`) — luxury
   hissi boşluk artırarak (yoğunluğu azaltarak) verilir, spacing'i bozarak değil.
 
@@ -84,7 +84,7 @@ kalıpları:
 - **Bildirim ve mesaj ikonları sepetin yakınında kümelenir** (genelde sepetin
   solunda) — "hesabımla ilgili şeyler" kümesi olarak birlikte okunur.
 - **Profil/hesap erişimi ya sağ üstte (topbar-only siteler) ya da sabit bir
-  köşede/sidebar altında** (uygulama-tarzı, sekmeli sitelerde) — TrendAI
+  köşede/sidebar altında** (uygulama-tarzı, sekmeli sitelerde) — ShopMind
   zaten sidebar-alt profil pattern'ini kullanıyor, bu KORUNUYOR; sağ üstte
   hem sepeti hem profili aynı kümeye koymak (ikisini birbirine
   karıştırmak) kullanıcı testlerinde daha çok tıklama hatasına yol açtığı

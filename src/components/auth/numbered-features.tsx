@@ -13,7 +13,7 @@ import {
 import { BLOB_RADII, useFinePointer, usePrefersReducedMotion } from "./morph-blob";
 
 const STEPS = [
-  { n: "01", title: "Anlat", desc: "Ne aradığını sohbet ederek anlat, TrendAI durumunu dinlesin." },
+  { n: "01", title: "Anlat", desc: "Ne aradığını sohbet ederek anlat, ShopMind durumunu dinlesin." },
   { n: "02", title: "Bul", desc: "Amazon ve Trendyol'daki gerçek ürünler arasından sana uygun olanları önersin." },
   { n: "03", title: "Satın Al", desc: "Önerilen ürüne tıkla, doğrudan satıldığı sayfaya git, güvenle satın al." },
   { n: "04", title: "Paylaş", desc: "Aldığını akışında paylaş, takipçilerin görsün ve senden ilham alsın." },

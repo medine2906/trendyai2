@@ -1,20 +1,48 @@
 @AGENTS.md
 
-# Proje Durumu (TrendAI)
+# Proje Durumu (ShopMind)
 
 > Bu bölüm her önemli değişiklik/compact sonrası güncellenir. Yeni bir oturuma başlarken
 > tüm dosyaları taramak yerine önce burayı oku; sadece ilgili dosyaları aç.
+>
+> **Not:** Proje 2026-09-15'te "TrendAI" isminden **"ShopMind"** ismine geçirildi
+> (Trendyol ile marka karışıklığı/hukuki risk endişesiyle + artık sadece giyim değil,
+> genel ürün önerisi hedeflendiği için "trend" kökü terk edildi). `package.json` `name`
+> alanı da `shopmind` oldu. Bu dosyadaki eski "Durum" günlük kayıtları TARİHSEL —
+> içlerindeki "TrendAI" adı o zamanki isim, geriye dönük değiştirilmedi.
 
 ## Özet
-TrendAI, önceden Firebase (Auth+Firestore+Genkit/Gemini) ile yapılmış bir hackathon
-projesinin Firebase'siz yeniden inşası. Stack: Next.js 16.2.10 (App Router, breaking
-changes — `middleware.ts` yerine `proxy.ts`), React 19, Tailwind v4 (CSS-first config),
-Prisma + SQLite, NextAuth v5 (Credentials + JWT + Google OAuth, adapter yok — Google
+ShopMind (eski adıyla TrendAI), önceden Firebase (Auth+Firestore+Genkit/Gemini) ile
+yapılmış bir hackathon projesinin Firebase'siz yeniden inşası. Stack: Next.js 16.2.10
+(App Router, breaking changes — `middleware.ts` yerine `proxy.ts`), React 19, Tailwind v4
+(CSS-first config), Prisma + SQLite (Supabase/Postgres'e geçiş planlanıyor, bkz. aşağıdaki
+"Durum" girdisi), NextAuth v5 (Credentials + JWT + Google OAuth, adapter yok — Google
 kullanıcıları signIn callback'inde manuel upsert edilir), Groq (`groq-sdk`,
 `llama-3.3-70b-versatile`) AI arama için — Gemini/Grok DEĞİL. UI bileşenleri shadcn/ui
 kullanılmadan sıfırdan yazıldı (`src/components/ui/`). Ürün görselleri artık gerçek:
 Amazon.com.tr arama sonuçlarından scrape edilen `m.media-amazon.com` görselleri
 (picsum placeholder KALDIRILDI).
+
+## Durum: İsim değişikliği TrendAI → ShopMind (2026-09-15)
+Kullanıcı, "TrendAI" isminin "Trendyol" ile karışabileceğini (hukuki risk) ve ürünün
+sadece giyimle sınırlı olmayacağını (genel ürün önerisi — giyim, elektronik, vb.)
+belirtti; "trend" kökünden bağımsız yeni bir isim istendi. `test.md`'de sunulan
+seçeneklerden onay gelmeyince (kullanıcı sadece "sadece kıyafet için değil" notunu
+düştü) **ShopMind** ismi seçilerek uygulandı — genel/kategori-bağımsız bir çağrışım.
+Değiştirilen yerler: `package.json` (`name`), tüm UI metinleri (`src/app/layout.tsx`
+title, login/signup/signin sayfaları, `main-shell.tsx` sidebar logosu, `auth-layout.tsx`,
+`apple-style-showcase-preview.tsx`, `nav-overlay-menu.tsx`, `numbered-features.tsx`,
+`product-showcase-demo.tsx`, `design-concepts/*`), `src/lib/groq.ts`'teki sistem
+promptundaki asistan kimliği, `README.md`, `automation/uiux.md`,
+`.claude/skills/frontend-design/SKILL.md`. Bu dosyadaki (CLAUDE.md) geçmiş "Durum"
+kayıtları kasıtlı olarak değiştirilmedi (tarihsel kayıt niteliğinde).
+Doğrulama: `grep -rn "TrendAI"` proje genelinde artık sadece `test.md` ve bu dosyanın
+tarihsel bölümlerinde geçiyor, kod/`src`'de sıfır sonuç. **Yapılmadı**: marka
+kimliği/görsel tasarım (renk, tipografi, logo) henüz "ShopMind"e göre yeniden
+düşünülmedi — bu, ayrı onaylanan UI yenileme fazında ele alınacak (bkz. `test.md`).
+Kullanıcı ayrıca Supabase'e geçişi ve sonraki fazların (ürün etiketleme, UI yenileme,
+ana sayfa mock sosyal özellikler, explore büyüme animasyonu) sormadan sırayla
+uygulanmasını onayladı — bu fazlar sıradaki oturum/adımlarda uygulanacak.
 
 ## Durum: Uçtan uca test otomasyonu kuruldu — frontend+backend+DB (2026-08-04)
 Kullanıcı "her şeyi test eden bir otomasyon kur" dedi. Üç katmanlı, gerçek (mock'suz)

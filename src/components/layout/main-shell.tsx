@@ -111,7 +111,7 @@ export function MainShell({
             <Flame className="h-6 w-6 shrink-0" strokeWidth={2.25} />
             {isSidebarExpanded && (
               <span className="font-bold" style={{ fontFamily: "var(--font-display)" }}>
-                TrendAI
+                ShopMind
               </span>
             )}
             <span className="sr-only">Menüyü aç/kapat</span>
@@ -227,7 +227,7 @@ export function MainShell({
               <SheetContent side="left" className="flex flex-col">
                 <Link href="/home" className="flex items-center gap-2 text-lg font-bold mb-4" style={{ fontFamily: "var(--font-display)" }}>
                   <Flame className="h-6 w-6" strokeWidth={2.25} />
-                  <span>TrendAI</span>
+                  <span>ShopMind</span>
                 </Link>
                 <nav className="grid gap-1 text-base font-medium">
                   {navLinks.map((link) => {

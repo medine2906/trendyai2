@@ -54,7 +54,7 @@ export function AppleStyleShowcasePreview() {
             color: "#1d1d1f",
           }}
         >
-          TrendAI
+          ShopMind
         </motion.h1>
 
         <motion.div
@@ -89,7 +89,7 @@ export function AppleStyleShowcasePreview() {
         className="text-center"
         style={{ background: "#ffffff", color: "#707070", padding: "16px", fontSize: "12px" }}
       >
-        © {new Date().getFullYear()} TrendAI
+        © {new Date().getFullYear()} ShopMind
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export default function SignupPage() {
       <Card className="w-full">
         <CardHeader className="items-center text-center">
           <Flame className="h-8 w-8 text-primary" />
-          <CardTitle className="text-xl">TrendAI&apos;a katıl</CardTitle>
+          <CardTitle className="text-xl">ShopMind&apos;a katıl</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">

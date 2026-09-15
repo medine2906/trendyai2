@@ -3,7 +3,7 @@ name: frontend-design
 description: Design system and taste rules for any UI work in this repo (new components, pages, or visual edits under src/app or src/components). Load before writing JSX/Tailwind so output uses a real type scale, an 8px spacing grid, defined color tokens, and consistent component patterns instead of generic ad-hoc Tailwind.
 ---
 
-# Frontend Design Rules (TrendAI)
+# Frontend Design Rules (ShopMind)
 
 Apply these whenever building or editing UI in `src/app/**` or `src/components/**`. This
 project has no shadcn/ui — components in `src/components/ui/` are hand-rolled, so new

@@ -88,7 +88,7 @@ export function NavOverlayMenu({ dark = true }: { dark?: boolean }) {
               className="absolute bottom-8 uppercase"
               style={{ color: ASH, fontSize: "12px", letterSpacing: "0.05em" }}
             >
-              TrendAI
+              ShopMind
             </span>
           </motion.div>
         )}

@@ -85,7 +85,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 filter: "drop-shadow(0 2px 28px rgba(184,170,208,0.4))",
               }}
             >
-              TrendAI
+              ShopMind
             </motion.h1>
 
             <motion.div
@@ -126,7 +126,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
               fontSize: "12px",
             }}
           >
-            © {new Date().getFullYear()} TrendAI
+            © {new Date().getFullYear()} ShopMind
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "TrendAI — Tasarım Konseptleri",
+  title: "ShopMind — Tasarım Konseptleri",
   robots: { index: false, follow: false },
 };
 
